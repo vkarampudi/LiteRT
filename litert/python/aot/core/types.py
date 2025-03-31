@@ -100,12 +100,22 @@ class Model:
     assert isinstance(self.data_, pathlib.Path)
     self.data_ = self.data_.read_bytes()
 
-  def save(self, path: pathlib.Path | str):
-    assert isinstance(self.data_, bytes)
+  def save(self, path: pathlib.Path | str, export_only: bool = False):
+    """Saves the model to the given path."""
     if isinstance(path, str):
       path = pathlib.Path(path)
-    path.write_bytes(self.data_)
-    self.data_ = path
+    if isinstance(self.data_, pathlib.Path):
+      assert export_only, (
+          'Cannot save a model that is not in memory. Use export_only=True for'
+          ' copying the model to a new path.'
+      )
+      with open(self.data_, 'rb') as f:
+        model_content = f.read()
+    else:
+      model_content = self.data_
+    path.write_bytes(model_content)
+    if not export_only:
+      self.data_ = path
 
 
 @dataclasses.dataclass()
@@ -139,7 +149,7 @@ class CompiledModels:
     report = []
     for backend, model in self.models_with_backend:
       report.append(f'Backend: {backend.id()}')
-      report.append(f'  Target: {backend.target_id_suffix}')
+      report.append(f'  Target: {backend.target_id}')
       report.append(f'  Partition Stats: {model.partition_stats}')
     return '\n'.join(report)
 
@@ -224,8 +234,19 @@ class Backend(metaclass=abc.ABCMeta):
 
   @property
   @abc.abstractmethod
-  def target_id_suffix(self) -> str:
+  def target(self) -> 'Target':
     pass
+
+  @property
+  @abc.abstractmethod
+  def target_id(self) -> str:
+    pass
+
+  @property
+  def target_id_suffix(self) -> str:
+    if self.target_id:
+      return '_' + self.target_id
+    return ''
 
   @property
   def config(self) -> Config:
