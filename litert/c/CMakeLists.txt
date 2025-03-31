@@ -9,6 +9,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+# Fetch tensorflow
+include(FetchContent)
+FetchContent_Declare(
+    tflite
+    GIT_REPOSITORY https://github.com/tensorflow/tensorflow.git 
+    GIT_TAG        v2.19.0
+)
+FetchContent_MakeAvailable(tflite)
+
 FetchContent_Declare(
   abseil-cpp
   GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
@@ -129,14 +138,19 @@ set\(</span>{out_var} "" PARENT_SCOPE)
 endfunction()
 
 # litert_common
-add_library(litert_common litert_common.cc litert_common.h)
+add_library(litert_common STATIC litert_common.cc litert_common.h)
+target_include_directories(litert_common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 
 # litert_common_test
 add_executable(litert_common_test litert_common_test.cc)
 target_link_libraries(litert_common_test PRIVATE litert_common GTest::gtest_main)
 
 # litert_any
-add_library(litert_any litert_any.h)
+# add_library(litert_any litert_any.h)
+add_library(litert_any INTERFACE)
+target_sources(litert_any INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/litert_any.h)
+set_target_properties(litert_any PROPERTIES LINKER_LANGUAGE C)
 
 # litert_environment
 add_library(litert_environment litert_environment.cc litert_environment.h)
@@ -183,6 +197,12 @@ target_link_libraries(litert_logging PRIVATE litert_common tensorflow_lite_minim
 add_executable(litert_logging_test litert_logging_test.cc)
 target_link_libraries(litert_logging_test PRIVATE litert_common litert_logging GTest::gtest_main)
 
+# litert_op_code
+add_library(litert_op_code INTERFACE)
+target_sources(litert_op_code INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/litert_op_code.h)
+target_include_directories(litert_op_code INTERFACE ${CMAKE_SOURCE_DIR} ${tflite_SOURCE_DIR}/tensorflow/lite)
+target_link_libraries(litert_op_code INTERFACE builtin_ops)
+
 # litert_layout
 add_library(litert_layout litert_layout.h)
 target_link_libraries(litert_layout PRIVATE
@@ -223,10 +243,6 @@ target_link_libraries(litert_model_test PRIVATE
   litert_test_matchers
 )
 
-# litert_op_code
-add_library(litert_op_code litert_op_code.h)
-target_link_libraries(litert_op_code PRIVATE tensorflow_lite_builtin_ops)
-
 # litert_options
 add_library(litert_options litert_options.cc litert_options.h)
 target_link_libraries(litert_options PRIVATE
@@ -248,7 +264,9 @@ target_link_libraries(litert_options_test PRIVATE
 )
 
 # litert_event_type
-add_library(litert_event_type litert_event_type.h)
+add_library(litert_event_type INTERFACE)
+target_sources(litert_event_type INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/litert_event_type.h)
+set_target_properties(litert_event_type PROPERTIES LINKER_LANGUAGE C)
 
 # litert_event
 add_library(litert_event litert_event.cc litert_event.h)
@@ -261,10 +279,15 @@ target_link_libraries(litert_event PRIVATE
 )
 
 # litert_tensor_buffer_types
-add_library(litert_tensor_buffer_types litert_tensor_buffer_types.h)
+add_library(litert_tensor_buffer_types INTERFACE)
+target_sources(litert_tensor_buffer_types INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/litert_tensor_buffer_types.h)
+set_target_properties(litert_tensor_buffer_types PROPERTIES LINKER_LANGUAGE C)
 
 # litert_gl_types
-add_library(litert_gl_types litert_gl_types.h)
+add_library(litert_gl_types INTERFACE)
+target_sources(litert_gl_types INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/litert_gl_types.h)
+set_target_properties(litert_gl_types PROPERTIES LINKER_LANGUAGE C)
+
 
 # litert_tensor_buffer
 add_library(litert_tensor_buffer litert_tensor_buffer.cc litert_tensor_buffer_requirements.cc litert_tensor_buffer.h litert_tensor_buffer_requirements.h)
