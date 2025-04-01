@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_model.h"
+#include "litert_model.h"
 
 #include <array>
 #include <cstddef>
@@ -25,12 +25,12 @@
 #include <gtest/gtest.h>
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "absl/types/span.h"  // from @com_google_absl
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_op_code.h"
-#include "litert/cc/litert_buffer_ref.h"
-#include "litert/core/model/model.h"
-#include "litert/core/util/flatbuffer_tools.h"
-#include "litert/test/matchers.h"
+#include "litert_common.h"
+#include "litert_op_code.h"
+#include "../cc/litert_buffer_ref.h"
+#include "../core/model/model.h"
+#include "../core/util/flatbuffer_tools.h"
+#include "../test/matchers.h"
 
 namespace {
 

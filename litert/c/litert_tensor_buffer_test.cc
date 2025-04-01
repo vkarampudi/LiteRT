@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_tensor_buffer.h"
+#include "litert_tensor_buffer.h"
 
 #include <cstdint>
 #include <cstring>
 
 #include <gtest/gtest.h>  // NOLINT: Need when ANDROID_API_LEVEL >= 26
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_event.h"
-#include "litert/c/litert_model.h"
-#include "litert/c/litert_tensor_buffer_types.h"
-#include "litert/cc/litert_layout.h"
-#include "litert/runtime/ahwb_buffer.h"  // IWYU pragma: keep
-#include "litert/runtime/dmabuf_buffer.h"  // IWYU pragma: keep
-#include "litert/runtime/event.h"
-#include "litert/runtime/fastrpc_buffer.h"  // IWYU pragma: keep
-#include "litert/runtime/gl_buffer.h"  // IWYU pragma: keep
-#include "litert/runtime/ion_buffer.h"  // IWYU pragma: keep
-#include "litert/runtime/open_cl_buffer.h"
+#include "litert_common.h"
+#include "litert_event.h"
+#include "litert_model.h"
+#include "litert_tensor_buffer_types.h"
+#include "../cc/litert_layout.h"
+#include "../runtime/ahwb_buffer.h"  // IWYU pragma: keep
+#include "../runtime/dmabuf_buffer.h"  // IWYU pragma: keep
+#include "../runtime/event.h"
+#include "../runtime/fastrpc_buffer.h"  // IWYU pragma: keep
+#include "../runtime/gl_buffer.h"  // IWYU pragma: keep
+#include "../runtime/ion_buffer.h"  // IWYU pragma: keep
+#include "../runtime/open_cl_buffer.h"
 
 namespace {
 constexpr const float kTensorData[] = {10, 20, 30, 40};

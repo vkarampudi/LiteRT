@@ -19,8 +19,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_environment.h"
+#include "litert_common.h"
+#include "litert_environment.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_tensor_buffer_requirements.h"
+#include "litert_tensor_buffer_requirements.h"
 
 #include <array>
 #include <cstdint>
 #include <cstring>
 
 #include <gtest/gtest.h>  // NOLINT: Need when ANDROID_API_LEVEL >= 26
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_tensor_buffer.h"
+#include "litert_common.h"
+#include "litert_tensor_buffer.h"
 
 namespace {
 

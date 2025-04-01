@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_accelerator_compilation_options.h"
+#include "litert_accelerator_compilation_options.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "litert/c/litert_common.h"
-#include "litert/cc/litert_expected.h"
-#include "litert/cc/litert_macros.h"
-#include "litert/core/version.h"
-#include "litert/test/matchers.h"
+#include "litert_common.h"
+#include "../cc/litert_expected.h"
+#include "../cc/litert_macros.h"
+#include "../core/version.h"
+#include "../test/matchers.h"
 
 namespace {
 

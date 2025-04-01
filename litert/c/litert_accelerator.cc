@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_accelerator.h"
+#include "litert_accelerator.h"
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_environment.h"
-#include "litert/cc/litert_expected.h"
-#include "litert/core/environment.h"
-#include "litert/runtime/accelerator.h"
+#include "litert_common.h"
+#include "litert_environment.h"
+#include "../cc/litert_expected.h"
+#include "../core/environment.h"
+#include "../runtime/accelerator.h"
 
 #ifdef __cplusplus
 extern "C" {

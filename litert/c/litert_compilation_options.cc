@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_compilation_options.h"
+#include "litert_compilation_options.h"
 
-#include "litert/c/litert_accelerator_compilation_options.h"
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_logging.h"
-#include "litert/cc/litert_macros.h"
-#include "litert/runtime/compilation_options.h"
+#include "litert_accelerator_compilation_options.h"
+#include "litert_common.h"
+#include "litert_logging.h"
+#include "../cc/litert_macros.h"
+#include "../runtime/compilation_options.h"
 
 #define LRT_CHECK_NON_NULL(handle)                          \
   if (!(handle)) {                                          \

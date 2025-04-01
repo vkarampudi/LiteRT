@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_environment.h"
+#include "litert_environment.h"
 
 #include "absl/types/span.h"  // from @com_google_absl
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_environment_options.h"
-#include "litert/cc/litert_macros.h"
-#include "litert/core/environment.h"
-#include "litert/runtime/accelerators/auto_registration.h"
-#include "litert/runtime/gpu_environment.h"
+#include "litert_common.h"
+#include "litert_environment_options.h"
+#include "../cc/litert_macros.h"
+#include "../core/environment.h"
+#include "../runtime/accelerators/auto_registration.h"
+#include "../runtime/gpu_environment.h"
 
 #ifdef __cplusplus
 extern "C" {

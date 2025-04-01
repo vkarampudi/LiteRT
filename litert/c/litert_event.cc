@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_event.h"
+#include "litert_event.h"
 
 #include <fcntl.h>
 
 #include <cstdint>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_event_type.h"
-#include "litert/c/litert_logging.h"
-#include "litert/cc/litert_macros.h"
-#include "litert/runtime/event.h"
+#include "litert_common.h"
+#include "litert_event_type.h"
+#include "litert_logging.h"
+#include "../cc/litert_macros.h"
+#include "../runtime/event.h"
 
 #ifdef __cplusplus
 extern "C" {

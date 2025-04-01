@@ -18,7 +18,7 @@
 #include <stdbool.h>  // NOLINT: To use bool type in C
 #include <stdint.h>
 
-#include "litert/c/litert_common.h"
+#include "litert_common.h"
 
 #ifdef __cplusplus
 extern "C" {

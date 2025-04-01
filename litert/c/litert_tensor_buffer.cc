@@ -18,13 +18,13 @@
 #include <cstdint>
 
 #include "absl/types/span.h"  // from @com_google_absl
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_event.h"
-#include "litert/c/litert_gl_types.h"
-#include "litert/c/litert_logging.h"
-#include "litert/c/litert_model.h"
-#include "litert/cc/litert_expected.h"
-#include "litert/runtime/tensor_buffer.h"
+#include "litert_common.h"
+#include "litert_event.h"
+#include "litert_gl_types.h"
+#include "litert_logging.h"
+#include "litert_model.h"
+#include "../cc/litert_expected.h"
+#include "../runtime/tensor_buffer.h"
 
 #if LITERT_HAS_OPENCL_SUPPORT
 #include <CL/cl.h>

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_environment_options.h"
+#include "litert_environment_options.h"
 
-#include "litert/c/litert_any.h"
-#include "litert/c/litert_common.h"
-#include "litert/cc/litert_macros.h"
-#include "litert/core/environment_options.h"
+#include "litert_any.h"
+#include "litert_common.h"
+#include "../cc/litert_macros.h"
+#include "../core/environment_options.h"
 
 extern "C" {
 

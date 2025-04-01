@@ -18,14 +18,14 @@
 #include <memory.h>
 #include <stddef.h>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_event.h"
-#include "litert/c/litert_model.h"
+#include "litert_common.h"
+#include "litert_event.h"
+#include "litert_model.h"
 #if LITERT_HAS_OPENCL_SUPPORT
 #include <CL/cl.h>
 #endif  // LITERT_HAS_OPENCL_SUPPORT
-#include "litert/c/litert_gl_types.h"
-#include "litert/c/litert_tensor_buffer_types.h"
+#include "litert_gl_types.h"
+#include "litert_tensor_buffer_types.h"
 
 #if LITERT_HAS_AHWB_SUPPORT
 #include <android/hardware_buffer.h>

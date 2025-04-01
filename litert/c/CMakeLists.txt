@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
+project(litert)
 
 # Fetch Google Test using FetchContent
 include(FetchContent)
@@ -8,6 +9,7 @@ FetchContent_Declare(
   GIT_TAG        v1.14.0 # Or any specific tag/commit you want
 )
 FetchContent_MakeAvailable(googletest)
+include_directories(${googletest_SOURCE_DIR})
 
 # Fetch tensorflow
 include(FetchContent)
@@ -17,6 +19,8 @@ FetchContent_Declare(
     GIT_TAG        v2.19.0
 )
 FetchContent_MakeAvailable(tflite)
+include_directories(${tflite_SOURCE_DIR})
+
 
 FetchContent_Declare(
   abseil-cpp
@@ -144,7 +148,7 @@ target_include_directories(litert_common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # litert_common_test
 add_executable(litert_common_test litert_common_test.cc)
-target_link_libraries(litert_common_test PRIVATE litert_common GTest::gtest_main)
+target_link_libraries(litert_common_test PRIVATE litert_common GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 # litert_any
 # add_library(litert_any litert_any.h)

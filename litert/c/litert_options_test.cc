@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_options.h"
+#include "litert_options.h"
 
 #include <cstdint>
 
 #include <gmock/gmock.h>  // IWYU pragma: keep
 #include <gtest/gtest.h>
-#include "litert/c/litert_common.h"
-#include "litert/test/common.h"
-#include "litert/test/matchers.h"
+#include "litert_common.h"
+#include "../test/common.h"
+#include "../test/matchers.h"
 
 namespace {
 using testing::litert::IsError;

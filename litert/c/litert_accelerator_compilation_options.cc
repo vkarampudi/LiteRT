@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_accelerator_compilation_options.h"
+#include "litert_accelerator_compilation_options.h"
 
 #include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "litert/c/litert_common.h"
+#include "litert_common.h"
 
 struct LiteRtAcceleratorCompilationOptionsT {
   LiteRtApiVersion payload_version;

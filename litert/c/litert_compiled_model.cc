@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_compiled_model.h"
+#include "litert_compiled_model.h"
 
 #include <stddef.h>
 
 #include <memory>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_compilation_options.h"
-#include "litert/c/litert_environment.h"
-#include "litert/c/litert_logging.h"
-#include "litert/c/litert_model.h"
-#include "litert/c/litert_tensor_buffer.h"
-#include "litert/c/litert_tensor_buffer_requirements.h"
-#include "litert/runtime/compiled_model.h"
+#include "litert_common.h"
+#include "litert_compilation_options.h"
+#include "litert_environment.h"
+#include "litert_logging.h"
+#include "litert_model.h"
+#include "litert_tensor_buffer.h"
+#include "litert_tensor_buffer_requirements.h"
+#include "../runtime/compiled_model.h"
 
 #ifdef __cplusplus
 extern "C" {

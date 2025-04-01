@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_compiled_model.h"
+#include "litert_compiled_model.h"
 
 #include <cstddef>
 #include <cstring>
@@ -23,14 +23,14 @@
 #include "absl/log/absl_log.h"  // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "absl/types/span.h"  // from @com_google_absl
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_compilation_options.h"
-#include "litert/c/litert_environment.h"
-#include "litert/c/litert_model.h"
-#include "litert/c/litert_tensor_buffer.h"
-#include "litert/c/litert_tensor_buffer_requirements.h"
-#include "litert/test/common.h"
-#include "litert/test/testdata/simple_model_test_vectors.h"
+#include "litert_common.h"
+#include "litert_compilation_options.h"
+#include "litert_environment.h"
+#include "litert_model.h"
+#include "litert_tensor_buffer.h"
+#include "litert_tensor_buffer_requirements.h"
+#include "../test/common.h"
+#include "../test/testdata/simple_model_test_vectors.h"
 
 using testing::FloatNear;
 using testing::Pointwise;

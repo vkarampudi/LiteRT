@@ -18,8 +18,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_tensor_buffer.h"
+#include "litert_common.h"
+#include "litert_tensor_buffer.h"
 
 #ifdef __cplusplus
 extern "C" {

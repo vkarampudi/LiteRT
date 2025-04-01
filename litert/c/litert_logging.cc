@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_logging.h"
+#include "litert_logging.h"
 
 #include <cstdarg>
 
-#include "litert/c/litert_common.h"
+#include "litert_common.h"
 #include "tensorflow/lite/logger.h"  // from @org_tensorflow
 #include "tensorflow/lite/minimal_logging.h"  // from @org_tensorflow
 

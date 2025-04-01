@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_environment_options.h"
+#include "litert_environment_options.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "litert/c/litert_any.h"
-#include "litert/c/litert_common.h"
-#include "litert/core/environment_options.h"
-#include "litert/test/matchers.h"
+#include "litert_any.h"
+#include "litert_common.h"
+#include "../core/environment_options.h"
+#include "../test/matchers.h"
 
 namespace {
 

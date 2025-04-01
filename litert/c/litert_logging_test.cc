@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_logging.h"
+#include "litert_logging.h"
 
 #include <gtest/gtest.h>  // NOLINT: Need when ANDROID_API_LEVEL >= 26
-#include "litert/c/litert_common.h"
+#include "litert_common.h"
 
 TEST(Layout, Creation) {
   LiteRtLogger logger;

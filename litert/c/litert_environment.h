@@ -15,8 +15,8 @@
 #ifndef ODML_LITERT_LITERT_C_LITERT_ENVIRONMENT_H_
 #define ODML_LITERT_LITERT_C_LITERT_ENVIRONMENT_H_
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_environment_options.h"
+#include "litert_common.h"
+#include "litert_environment_options.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_options.h"
+#include "litert_options.h"
 
 #include <cstdint>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_op_code.h"
-#include "litert/core/model/model.h"
+#include "litert_common.h"
+#include "litert_op_code.h"
+#include "../core/model/model.h"
 
 #ifdef __cplusplus
 extern "C" {

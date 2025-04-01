@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_accelerator.h"
+#include "litert_accelerator.h"
 
 #include <memory>
 #include <string>
@@ -20,13 +20,13 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "absl/strings/string_view.h"  // from @com_google_absl
-#include "litert/c/litert_accelerator_registration.h"
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_environment.h"
-#include "litert/cc/litert_expected.h"
-#include "litert/cc/litert_macros.h"
-#include "litert/runtime/accelerator.h"
-#include "litert/test/matchers.h"
+#include "litert_accelerator_registration.h"
+#include "litert_common.h"
+#include "litert_environment.h"
+#include "../cc/litert_expected.h"
+#include "../cc/litert_macros.h"
+#include "../runtime/accelerator.h"
+#include "../test/matchers.h"
 
 #define LITERT_ENSURE_OK(expr)       \
   do {                               \

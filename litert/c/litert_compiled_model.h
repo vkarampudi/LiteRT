@@ -17,12 +17,12 @@
 
 #include <stddef.h>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_compilation_options.h"
-#include "litert/c/litert_environment.h"
-#include "litert/c/litert_model.h"
-#include "litert/c/litert_tensor_buffer.h"
-#include "litert/c/litert_tensor_buffer_requirements.h"
+#include "litert_common.h"
+#include "litert_compilation_options.h"
+#include "litert_environment.h"
+#include "litert_model.h"
+#include "litert_tensor_buffer.h"
+#include "litert_tensor_buffer_requirements.h"
 
 #ifdef __cplusplus
 extern "C" {

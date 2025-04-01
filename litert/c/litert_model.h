@@ -19,9 +19,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_layout.h"
-#include "litert/c/litert_op_code.h"
+#include "litert_common.h"
+#include "litert_layout.h"
+#include "litert_op_code.h"
 #include "tensorflow/lite/core/c/c_api_types.h"  // from @org_tensorflow
 
 #ifdef __cplusplus

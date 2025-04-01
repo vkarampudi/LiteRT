@@ -17,7 +17,7 @@
 
 #include <stdarg.h>
 
-#include "litert/c/litert_common.h"
+#include "litert_common.h"
 
 #ifdef __cplusplus
 extern "C" {

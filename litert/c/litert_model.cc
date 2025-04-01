@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "litert/c/litert_model.h"
+#include "litert_model.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -21,12 +21,12 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"  // from @com_google_absl
-#include "litert/c/litert_common.h"
-#include "litert/c/litert_op_code.h"
-#include "litert/cc/litert_buffer_ref.h"
-#include "litert/core/model/model.h"
-#include "litert/core/model/model_load.h"
-#include "litert/core/model/model_serialize.h"
+#include "litert_common.h"
+#include "litert_op_code.h"
+#include "../cc/litert_buffer_ref.h"
+#include "../core/model/model.h"
+#include "../core/model/model_load.h"
+#include "../core/model/model_serialize.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -15,7 +15,7 @@
 #ifndef ODML_LITERT_LITERT_C_LITERT_ACCELERATOR_COMPILATION_OPTIONS_H_
 #define ODML_LITERT_LITERT_C_LITERT_ACCELERATOR_COMPILATION_OPTIONS_H_
 
-#include "litert/c/litert_common.h"
+#include "litert_common.h"
 
 #ifdef __cplusplus
 extern "C" {
