@@ -41,8 +41,6 @@ jobs:
           cp .tf_configure.bazelrc ${GITHUB_WORKSPACE}
 
       - name: Run bazel test
-        # TODO(ecalubaquib): Remove continue-on-error once b/391391626 is fixed.
-        continue-on-error: true
         run: |
           #!/bin/bash"
           cd ${GITHUB_WORKSPACE}
