@@ -43,6 +43,9 @@ typedef struct AHardwareBuffer AHardwareBuffer;
 extern "C" {
 #endif  // __cplusplus
 
+typedef struct WGPUBufferImpl* WGPUBuffer;
+typedef struct WGPUTextureImpl* WGPUTexture;
+
 #define LITERT_HOST_MEMORY_BUFFER_ALIGNMENT 64
 
 typedef void (*LiteRtHostMemoryDeallocator)(void* addr);
@@ -53,6 +56,8 @@ typedef void (*LiteRtFastRpcDeallocator)(void* fastrpc_buffer_addr);
 typedef void (*LiteRtOpenClDeallocator)(void* opencl_buffer_addr);
 typedef void (*LiteRtGlBufferDeallocator)(void* gl_buffer_addr);
 typedef void (*LiteRtGlTextureDeallocator)(void* gl_texture_addr);
+typedef void (*LiteRtWebGpuBufferDeallocator)(void* webgpu_buffer_addr);
+typedef void (*LiteRtWebGpuTextureDeallocator)(void* webgpu_texture_addr);
 
 // /////////////////////////////////////////////////////////////////////////////
 // TensorBuffers.
@@ -219,6 +224,13 @@ LiteRtStatus LiteRtGetTensorBufferGlTexture(
     LiteRtTensorBuffer tensor_buffer, LiteRtGLenum* target, LiteRtGLuint* id,
     LiteRtGLenum* format, size_t* size_bytes, LiteRtGLint* layer);
 
+#if LITERT_HAS_WEBGPU_SUPPORT
+// Return an error if the backing buffer is not a WebGpu buffer.
+LiteRtStatus LiteRtGetTensorBufferWebGpuBuffer(LiteRtTensorBuffer tensor_buffer,
+                                               WGPUBuffer* webgpu_buffer_addr);
+
+#endif  // LITERT_HAS_WEBGPU_SUPPORT
+
 // Create a managed TensorBuffer for a given size and type.
 //
 // Caller owns the returned LiteRtTensorBuffer. The owner is responsible for
@@ -268,13 +280,6 @@ LiteRtStatus LiteRtSetTensorBufferEvent(LiteRtTensorBuffer tensor_buffer,
 // Remove any event that may have been previously attached to the given tensor
 // buffer and deallocate such event.
 LiteRtStatus LiteRtClearTensorBufferEvent(LiteRtTensorBuffer tensor_buffer);
-
-// Lock mode for tensor buffer.
-typedef enum {
-  kLiteRtTensorBufferLockModeRead = 0,
-  kLiteRtTensorBufferLockModeWrite = 1,
-  kLiteRtTensorBufferLockModeReadWrite = 2,
-} LiteRtTensorBufferLockMode;
 
 // Lock a tensor buffer and map it to host memory, potentially synchronizing on
 // an event that was previously attached to the tensor buffer with

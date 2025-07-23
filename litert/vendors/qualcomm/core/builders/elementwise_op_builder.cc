@@ -112,6 +112,18 @@ std::vector<OpWrapper> BuildElementwiseRsqrtOp(
   return res;
 }
 
+std::vector<OpWrapper> BuildElementwiseSqrtOp(
+    TensorPool& tensor_pool, const std::vector<TensorWrapperRef>& inputs,
+    const std::vector<TensorWrapperRef>& outputs) {
+  std::vector<OpWrapper> res;
+
+  auto& elementwise_op = CreateOpWrapper(res, QNN_OP_ELEMENT_WISE_SQUARE_ROOT);
+  elementwise_op.AddInputTensor(inputs[0]);
+  elementwise_op.AddOutputTensor(outputs[0]);
+
+  return res;
+}
+
 std::vector<OpWrapper> BuildElementwiseSquareOp(
     TensorPool& tensor_pool, const std::vector<TensorWrapperRef>& inputs,
     const std::vector<TensorWrapperRef>& outputs) {
@@ -376,4 +388,20 @@ std::vector<OpWrapper> BuildElementwiseAbsOp(
 
   return res;
 }
+
+std::vector<OpWrapper> BuildElementwiseNegOp(
+    TensorPool& tensor_pool, const std::vector<TensorWrapperRef>& inputs,
+    const std::vector<TensorWrapperRef>& outputs) {
+  std::vector<OpWrapper> res;
+
+  auto& elementwise_op = CreateOpWrapper(res, QNN_OP_ELEMENT_WISE_UNARY);
+  elementwise_op.AddInputTensor(inputs[0]);
+  elementwise_op.AddOutputTensor(outputs[0]);
+  elementwise_op.AddScalarParam<std::uint32_t>(
+      QNN_OP_ELEMENT_WISE_UNARY_PARAM_OPERATION,
+      QNN_OP_ELEMENT_WISE_UNARY_OPERATION_NEG);
+
+  return res;
+}
+
 }  // namespace qnn

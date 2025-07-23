@@ -196,7 +196,9 @@ py_strict_binary(
         ":generate_examples_lib",
         ":mlir_convert",
         "@org_tensorflow//tensorflow:tensorflow_py",
-    ],
+    ] + if_pywrap(
+        if_true = ["@org_tensorflow//tensorflow/python:_pywrap_tensorflow"],
+    ),
 )
 
 py_strict_library(
@@ -402,10 +404,10 @@ cc_library(
     name = "util",
     hdrs = ["util.h"],
     deps = [
-        "//tflite:error_reporter",
         "//tflite:string",
         "//tflite/core/api",
-        "@local_tsl//tsl/platform:logging",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:flags",
     ],
 )
 

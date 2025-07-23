@@ -54,6 +54,7 @@ package_group(
         "//litert/compiler/...",
         "//litert/core/...",
         "//litert/runtime/...",
+        "//litert/cts/...",
         "//litert/tools/...",
         "//litert/vendors/cc/...",
         "//litert/vendors/qualcomm/...",
@@ -84,6 +85,7 @@ package_group(
         "//litert/tools/...",
         "//litert/vendors/...",
         # copybara:uncomment "//third_party/odml/litert/llm/...",
+        # copybara:uncomment "//third_party/odml/litert/tensor/...",
     ],
 )
 

@@ -1,6 +1,6 @@
 # Guide to prepare and build the app
 
-LiteRT NPU acceleration is only available through an Early Access Program. If you are not already enrolled, [sign up](forms.gle/CoH4jpLwxiEYvDvF6).
+LiteRT NPU acceleration is only available through an Early Access Program. If you are not already enrolled, [sign up](https://forms.gle/CoH4jpLwxiEYvDvF6).
 
 See [NPU acceleration instruction](https://ai.google.dev/edge/litert/next/eap/npu) for more information about compiling NPU models and setup NPU runtime.
 
@@ -18,13 +18,17 @@ See [NPU acceleration instruction](https://ai.google.dev/edge/litert/next/eap/np
 WARNING: Before building the app, please follow instructions above to setup NPU
 models and runtime correctly.
 
+Please make sure your AI Pack and NPU runtime are being placed under the project
+root folder (current folder for this gradle project) and copy the 
+`device_targeting_configuration.xml` from your AI Pack to `./app` folder.
+
 From the app's root directory, run:
 
 ```sh
 $ ./gradlew bundle
 ```
 
-And it will produce the app bundle at
+And it will produce the app bundle at under thde `./app` folder
 `./build/outputs/bundle/release/app-release.aab`.
 
 ## Install the app bundle to a device for local testing

@@ -55,13 +55,12 @@ LiteRtStatus LiteRtGetCompiledModelInputBufferRequirements(
     return kLiteRtStatusErrorInvalidArgument;
   }
 
-  auto res = compiled_model->GetInputBufferRequirementsCApi(signature_index,
-                                                            input_index);
-  if (!res) {
-    LITERT_LOG(LITERT_ERROR, "%s", res.Error().Message().c_str());
-    return res.Error().Status();
-  }
-  *buffer_requirements = res.Value();
+  LITERT_ASSIGN_OR_RETURN(
+      LiteRtTensorBufferRequirementsConst buffer_requirements_ptr,
+      compiled_model->GetInputBufferRequirements(signature_index,
+                                                     input_index));
+  *buffer_requirements =
+      const_cast<LiteRtTensorBufferRequirements>(buffer_requirements_ptr);
   return kLiteRtStatusOk;
 }
 
@@ -73,13 +72,12 @@ LiteRtStatus LiteRtGetCompiledModelOutputBufferRequirements(
     return kLiteRtStatusErrorInvalidArgument;
   }
 
-  auto res = compiled_model->GetOutputBufferRequirementsCApi(signature_index,
-                                                             output_index);
-  if (!res) {
-    LITERT_LOG(LITERT_ERROR, "%s", res.Error().Message().c_str());
-    return res.Error().Status();
-  }
-  *buffer_requirements = res.Value();
+  LITERT_ASSIGN_OR_RETURN(
+      LiteRtTensorBufferRequirementsConst buffer_requirements_ptr,
+      compiled_model->GetOutputBufferRequirementsCApi(signature_index,
+                                                      output_index));
+  *buffer_requirements =
+      const_cast<LiteRtTensorBufferRequirements>(buffer_requirements_ptr);
   return kLiteRtStatusOk;
 }
 
@@ -176,11 +174,14 @@ LiteRtStatus LiteRtCompiledModelIsFullyAccelerated(
   return kLiteRtStatusOk;
 }
 
-LiteRtStatus LiteRtCompiledModelSetProfiler(LiteRtCompiledModel compiled_model,
-                                            LiteRtProfiler profiler) {
-  LITERT_RETURN_IF_ERROR(compiled_model != nullptr && profiler != nullptr,
-                         kLiteRtStatusErrorInvalidArgument);
-  LITERT_RETURN_IF_ERROR(compiled_model->SetProfiler(profiler));
+LiteRtStatus LiteRtCompiledModelGetProfiler(LiteRtCompiledModel compiled_model,
+                                            LiteRtProfiler* profiler) {
+  LITERT_RETURN_IF_ERROR(
+      compiled_model != nullptr && profiler != nullptr,
+      kLiteRtStatusErrorInvalidArgument);
+  LITERT_ASSIGN_OR_RETURN(LiteRtProfilerT * profiler_ptr,
+                          compiled_model->GetProfiler());
+  *profiler = profiler_ptr;
   return kLiteRtStatusOk;
 }
 

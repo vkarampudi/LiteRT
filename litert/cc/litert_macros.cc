@@ -21,10 +21,60 @@
 #include "litert/c/litert_common.h"
 #include "litert/c/litert_logging.h"
 #include "litert/cc/litert_expected.h"
+#include "litert/cc/litert_source_location.h"
 
 namespace litert {
 
-ErrorStatusBuilder::operator absl::Status() const noexcept {
+namespace {
+LiteRtStatus ToLiteRtStatus(const absl::StatusCode& code) {
+  switch (code) {
+    case absl::StatusCode::kOk:
+      return kLiteRtStatusOk;
+    case absl::StatusCode::kCancelled:
+      return kLiteRtStatusErrorTimeoutExpired;
+    case absl::StatusCode::kUnknown:
+      return kLiteRtStatusErrorUnknown;
+    case absl::StatusCode::kInvalidArgument:
+      return kLiteRtStatusErrorInvalidArgument;
+    case absl::StatusCode::kDeadlineExceeded:
+      return kLiteRtStatusErrorTimeoutExpired;
+    case absl::StatusCode::kNotFound:
+      return kLiteRtStatusErrorNotFound;
+    case absl::StatusCode::kAlreadyExists:
+      return kLiteRtStatusErrorRuntimeFailure;
+    case absl::StatusCode::kPermissionDenied:
+      return kLiteRtStatusErrorRuntimeFailure;
+    case absl::StatusCode::kResourceExhausted:
+      return kLiteRtStatusErrorRuntimeFailure;
+    case absl::StatusCode::kFailedPrecondition:
+      return kLiteRtStatusErrorRuntimeFailure;
+    case absl::StatusCode::kAborted:
+      return kLiteRtStatusErrorRuntimeFailure;
+    case absl::StatusCode::kOutOfRange:
+      return kLiteRtStatusErrorIndexOOB;
+    case absl::StatusCode::kUnimplemented:
+      return kLiteRtStatusErrorUnsupported;
+    case absl::StatusCode::kInternal:
+      return kLiteRtStatusErrorUnknown;
+    case absl::StatusCode::kUnavailable:
+      return kLiteRtStatusErrorNotFound;
+    case absl::StatusCode::kDataLoss:
+      return kLiteRtStatusErrorRuntimeFailure;
+    case absl::StatusCode::kUnauthenticated:
+      return kLiteRtStatusErrorRuntimeFailure;
+    default:
+      return kLiteRtStatusErrorUnknown;
+  }
+  return kLiteRtStatusErrorUnknown;
+}
+}  // namespace
+
+ErrorStatusBuilder::ErrorStatusBuilder(absl::Status&& status,
+                                       litert::SourceLocation loc)
+    : error_(ToLiteRtStatus(status.code()), std::string(status.message())),
+      loc_(loc) {}
+
+absl::Status ErrorStatusBuilder::ToAbslStatus() const noexcept {
   PrintLog();
   switch (error_.Status()) {
     case kLiteRtStatusOk:
@@ -47,6 +97,8 @@ ErrorStatusBuilder::operator absl::Status() const noexcept {
       return absl::FailedPreconditionError(error_.Message());
     case kLiteRtStatusErrorUnknown:
       return absl::UnknownError(error_.Message());
+    case kLiteRtStatusErrorAlreadyExists:
+      return absl::AlreadyExistsError(error_.Message());
     case kLiteRtStatusErrorFileIO:
       return absl::UnavailableError(error_.Message());
     case kLiteRtStatusErrorInvalidFlatbuffer:
@@ -71,8 +123,6 @@ ErrorStatusBuilder::operator absl::Status() const noexcept {
       return absl::NotFoundError(error_.Message());
     case kLiteRtStatusErrorInvalidLegalization:
       return absl::InvalidArgumentError(error_.Message());
-    default:
-      return absl::UnknownError(error_.Message());
   }
 }
 

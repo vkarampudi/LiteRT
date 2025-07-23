@@ -121,17 +121,28 @@ class RandomDevice {
 
 // PRIMITIVE DATA GENERATORS ///////////////////////////////////////////////////
 
-// Abstract base class for generating data of a certain type from a given rng
-// device, e.g. populating tensors and the like.
+// Base class for generating data of a certain type.
+template <typename D>
+class DataGeneratorBase {
+ public:
+  using DataType = D;
+
+  // Bounds of distribution.
+  virtual DataType Max() const = 0;
+  virtual DataType Min() const = 0;
+};
+
+// Base class for generating data of a certain type from a specific
+// distribution.
 template <typename D, template <typename> typename Dist>
-class DataGenerator {
+class DataGenerator : public DataGeneratorBase<D> {
  public:
   using DataType = D;
   using Wide = WideType<D>;
 
   // Bounds of distribution.
-  DataType Max() const { return dist_.max(); }
-  DataType Min() const { return dist_.min(); }
+  DataType Max() const override { return dist_.max(); }
+  DataType Min() const override { return dist_.min(); }
 
  protected:
   Dist<DataType> dist_;
@@ -222,6 +233,7 @@ using DefaultDevice = RandomDevice<std::mt19937>;
 
 // This class composes the primitive data generators above to support
 // generating randomized tensor types (and shapes).
+// TODO: Update this to separate the type and shape generation.
 template <size_t Rank, size_t MaxSize, LiteRtElementType... ElementType>
 class RandomTensorType {
  private:
@@ -260,6 +272,15 @@ class RandomTensorType {
   // TODO: Explore need for 0 valued dims.
   static constexpr DimSize kMinDimSize = 1;
 
+ private:
+  static constexpr ShapeSpec DefaultShapeSpec() {
+    ShapeSpec res;
+    for (auto i = 0; i < Rank; ++i) {
+      res[i] = RandDim();
+    }
+    return res;
+  };
+
  public:
   // Generate a random tensor type from the specification provided. An
   // element type is taken randomly from the template parameter. The shape
@@ -269,8 +290,9 @@ class RandomTensorType {
   // which signifies a range over all possible values of that dimension.
   // `shuffle` can be used to permute the dimensions after generation.
   template <typename Rng>
-  Expected<LiteRtRankedTensorType> operator()(Rng& rng, const ShapeSpec& spec,
-                                              bool shuffle = false) {
+  Expected<LiteRtRankedTensorType> operator()(
+      Rng& rng, const ShapeSpec& spec = DefaultShapeSpec(),
+      bool shuffle = false) {
     LITERT_ASSIGN_OR_RETURN(auto layout, Layout(rng, spec, shuffle));
     return LiteRtRankedTensorType{GenerateElementType(rng), std::move(layout)};
   }
@@ -366,15 +388,17 @@ class RandomTensorDataBase {
   static_assert(std::is_integral_v<D> || std::is_floating_point_v<D>);
 
  public:
-  // Fill out the pre-allocated buffer with random data. The buf arg can
-  // be anything that is "spannable".
-  template <
-      typename Rng, typename Buf,
-      typename = std::enable_if_t<!std::is_same_v<Buf, LiteRtLayout>, void>>
-  Expected<void> operator()(Rng& rng, Buf& buf) {
-    auto span = absl::MakeSpan(buf);
-    std::generate(buf.begin(), buf.end(), [&]() { return gen_(rng); });
+  // Fill out the pre-allocated buffer with random data.
+  template <typename Rng, typename Iter>
+  Expected<void> operator()(Rng& rng, Iter start, Iter end) {
+    std::generate(start, end, [&]() { return gen_(rng); });
     return {};
+  }
+
+  // Fill out the pre-allocated buffer with random data.
+  template <typename Rng>
+  Expected<void> operator()(Rng& rng, absl::Span<D> data) {
+    return operator()(rng, data.begin(), data.end());
   }
 
   // Allocate a new buffer with size matching the given layout and fill it with
@@ -383,9 +407,7 @@ class RandomTensorDataBase {
   Expected<std::vector<D>> operator()(Rng& rng, const LiteRtLayout& layout) {
     size_t num_elements;
     LITERT_RETURN_IF_ERROR(LiteRtGetNumLayoutElements(&layout, &num_elements));
-    std::vector<D> res(num_elements);
-    std::generate(res.begin(), res.end(), [&]() { return gen_(rng); });
-    return res;
+    return operator()(rng, num_elements);
   }
 
   // Allocate a new buffer with the given number of elements and fill it with
@@ -393,7 +415,7 @@ class RandomTensorDataBase {
   template <typename Rng>
   Expected<std::vector<D>> operator()(Rng& rng, size_t num_elements) {
     std::vector<D> res(num_elements);
-    std::generate(res.begin(), res.end(), [&]() { return gen_(rng); });
+    LITERT_RETURN_IF_ERROR(operator()(rng, res.begin(), res.end()));
     return res;
   }
 

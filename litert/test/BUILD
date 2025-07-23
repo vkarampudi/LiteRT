@@ -171,8 +171,15 @@ cc_library(
     hdrs = ["matchers.h"],
     deps = [
         "//litert/c:litert_common",
+        "//litert/c:litert_model_types",
+        "//litert/cc:litert_c_types_printing",
+        "//litert/cc:litert_element_type",
         "//litert/cc:litert_expected",
+        "//litert/cc:litert_model",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -183,6 +190,7 @@ cc_library(
     hdrs = ["rng_fixture.h"],
     deps = [
         ":fuzz",
+        "//litert/cc:litert_numerics",
         "//litert/cc:litert_rng",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_googletest//:gtest",
@@ -195,7 +203,11 @@ cc_test(
     deps = [
         ":matchers",
         "//litert/c:litert_common",
+        "//litert/c:litert_model_types",
+        "//litert/cc:litert_element_type",
         "//litert/cc:litert_expected",
+        "//litert/cc:litert_model",
+        "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -209,9 +221,15 @@ cc_library(
     tags = ["avoid_dep"],
     deps = [
         "//litert/c:litert_common",
+        "//litert/c:litert_model_types",
+        "//litert/cc:litert_c_types_printing",
+        "//litert/cc:litert_element_type",
         "//litert/cc:litert_expected",
+        "//litert/cc:litert_model",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -219,6 +237,36 @@ cc_library(
 cc_library(
     name = "fuzz",
     hdrs = ["fuzz.h"],
+)
+
+cc_library(
+    name = "simple_buffer",
+    hdrs = ["simple_buffer.h"],
+    deps = [
+        "//litert/c:litert_dispatch_headers",
+        "//litert/cc:litert_buffer_ref",
+        "//litert/cc:litert_environment",
+        "//litert/cc:litert_expected",
+        "//litert/cc:litert_layout",
+        "//litert/cc:litert_macros",
+        "//litert/cc:litert_model",
+        "//litert/cc:litert_tensor_buffer",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "simple_buffer_test",
+    srcs = ["simple_buffer_test.cc"],
+    deps = [
+        ":matchers",
+        ":rng_fixture",
+        ":simple_buffer",
+        "//litert/cc:litert_element_type",
+        "//litert/cc:litert_model",
+        "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 exports_files(srcs = [

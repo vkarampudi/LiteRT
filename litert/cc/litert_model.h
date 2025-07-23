@@ -69,10 +69,32 @@ class RankedTensorType {
 
   const Layout& Layout() const { return layout_; }
 
+  Expected<size_t> Bytes() const {
+    LITERT_ASSIGN_OR_RETURN(const size_t num_elements, layout_.NumElements());
+    auto byte_width = GetByteWidth(element_type_);
+    if (!byte_width) {
+      return Unexpected(kLiteRtStatusErrorInvalidArgument);
+    }
+    return num_elements * *byte_width;
+  }
+
  private:
   enum ElementType element_type_;
   class Layout layout_;
 };
+
+// Construct a ranked tensor type from c++ type.
+template <typename T>
+RankedTensorType MakeRankedTensorType(
+    std::initializer_list<Layout::Dim> shape) {
+  return RankedTensorType(GetElementType<T>(), Layout(std::move(shape)));
+}
+template <typename T, typename Shape>
+RankedTensorType MakeRankedTensorType(const Shape& shape) {
+  return RankedTensorType(
+      GetElementType<T>(),
+      Layout(Dimensions(std::cbegin(shape), std::cend(shape))));
+}
 
 // Tensor weights. C++ equivalent of LiteRtWeights.
 class Weights : public internal::NonOwnedHandle<LiteRtWeights> {
@@ -101,10 +123,10 @@ class Tensor : public internal::NonOwnedHandle<LiteRtTensor> {
 
   ElementType ElementType() const {
     if (TypeId() == kLiteRtUnrankedTensorType) {
-      LITERT_ASSIGN_OR_ABORT(auto tensor_type, UnrankedTensorType())
+      LITERT_ASSIGN_OR_ABORT(auto tensor_type, UnrankedTensorType());
       return static_cast<enum ElementType>(tensor_type.element_type);
     } else {
-      LITERT_ASSIGN_OR_ABORT(auto tensor_type, RankedTensorType())
+      LITERT_ASSIGN_OR_ABORT(auto tensor_type, RankedTensorType());
       return tensor_type.ElementType();
     }
   }
@@ -246,7 +268,6 @@ class Tensor : public internal::NonOwnedHandle<LiteRtTensor> {
     return std::nullopt;
   }
 
-  bool IsSubgraphOutput() const;
   bool IsSubgraphInput() const;
   bool IsConstant() const;
 };

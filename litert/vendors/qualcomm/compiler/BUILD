@@ -27,9 +27,7 @@ package(
 
 litert_dynamic_lib(
     name = "qnn_compiler_plugin",
-    srcs = [
-        "qnn_compiler_plugin.cc",
-    ],
+    srcs = ["qnn_compiler_plugin.cc"],
     hdrs = ["//litert/vendors/c:litert_compiler_plugin.h"],
     copts = [
         "-Os",
@@ -45,6 +43,8 @@ litert_dynamic_lib(
         "//conditions:default": [],
     }) + [
         "-Wl,-soname=libLiteRtCompilerPlugin_Qualcomm.so",
+        # Wheel package places the shared library in the root directory.
+        "-Wl,-rpath,$$ORIGIN/../../..",
     ],
     shared_lib_name = "qnn_compiler_plugin_so",
     so_name = "libLiteRtCompilerPlugin_Qualcomm.so",
@@ -80,9 +80,7 @@ litert_dynamic_lib(
 
 litert_test(
     name = "qnn_compiler_plugin_test",
-    srcs = [
-        "qnn_compiler_plugin_test.cc",
-    ],
+    srcs = ["qnn_compiler_plugin_test.cc"],
     copts = ["-DGOOGLE_COMMANDLINEFLAGS_FULL_API=1"],
     data = [
         "//litert/test:mlir_test_data",
@@ -116,6 +114,7 @@ litert_test(
         "//litert/c:litert_common",
         "//litert/c:litert_logging",
         "//litert/c:litert_op_code",
+        "//litert/c/options:litert_qualcomm_options",
         "//litert/cc:litert_expected",
         "//litert/cc:litert_macros",
         "//litert/cc:litert_model",
@@ -158,6 +157,7 @@ litert_lib(
         "//litert/vendors/qualcomm:qnn_manager",
         "//litert/vendors/qualcomm/core:common",
         "//litert/vendors/qualcomm/core:tensor_pool",
+        "//litert/vendors/qualcomm/core/builders:arg_min_max_op_builder",
         "//litert/vendors/qualcomm/core/builders:broadcast_to_op_builder",
         "//litert/vendors/qualcomm/core/builders:cast_op_builder",
         "//litert/vendors/qualcomm/core/builders:concatenation_op_builder",
@@ -195,9 +195,11 @@ litert_lib(
         "//litert/vendors/qualcomm/core/builders:softmax_op_builder",
         "//litert/vendors/qualcomm/core/builders:spatial_transform_op_builder",
         "//litert/vendors/qualcomm/core/builders:split_op_builder",
+        "//litert/vendors/qualcomm/core/builders:strided_slice_op_builder",
         "//litert/vendors/qualcomm/core/builders:tanh_op_builder",
         "//litert/vendors/qualcomm/core/builders:transpose_conv_op_builder",
         "//litert/vendors/qualcomm/core/builders:transpose_op_builder",
+        "//litert/vendors/qualcomm/core/builders:unpack_op_builder",
         "//litert/vendors/qualcomm/core/transformation:graph_to_graph",
         "//litert/vendors/qualcomm/core/utils:miscs",
         "//litert/vendors/qualcomm/core/wrappers:op_wrapper",
@@ -213,9 +215,7 @@ litert_lib(
 
 litert_lib(
     name = "graph_mapper",
-    srcs = [
-        "graph_mapper.cc",
-    ],
+    srcs = ["graph_mapper.cc"],
     hdrs = ["graph_mapper.h"],
     visibility = ["//litert:__subpackages__"],
     deps = [

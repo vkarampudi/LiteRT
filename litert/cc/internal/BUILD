@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//litert/integration_test:litert_device.bzl", "litert_device_exec")
+
 package(
     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
     default_visibility = [
@@ -142,6 +144,7 @@ cc_library(
         ":litert_custom_op_kernel",
         ":litert_environment",
         ":litert_options",
+        ":litert_profiler",
         ":litert_tensor_buffer",
         "//litert/c:litert_any",
         "//litert/c:litert_common",
@@ -154,7 +157,6 @@ cc_library(
         "//litert/cc:litert_handle",
         "//litert/cc:litert_macros",
         "//litert/cc:litert_model",
-        "//litert/cc:litert_profiler",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings:string_view",
@@ -284,4 +286,82 @@ cc_library(
         "//litert/cc:litert_opaque_options",
         "@com_google_absl//absl/strings:string_view",
     ],
+)
+
+cc_library(
+    name = "litert_profiler",
+    hdrs = ["//litert/cc:litert_profiler.h"],
+    deps = [
+        "//litert/c:litert_common",
+        "//litert/c:litert_profiler",
+        "//litert/c:litert_profiler_event",
+        "//litert/cc:litert_expected",
+        "//litert/cc:litert_handle",
+        "//litert/cc:litert_macros",
+    ],
+)
+
+cc_library(
+    name = "litert_external_litert_buffer_context",
+    hdrs = ["//litert/cc:litert_external_litert_buffer_context.h"],
+    deps = [
+        ":litert_environment",
+        ":litert_tensor_buffer",
+        "//litert/c:litert_common",
+        "//litert/c:litert_external_litert_buffer_context",
+        "//litert/cc:litert_expected",
+        "//litert/cc:litert_handle",
+        "//litert/cc:litert_macros",
+        "//tflite/c:common",
+    ],
+)
+
+cc_test(
+    name = "litert_compiled_model_webgpu_test",
+    srcs = ["//litert/cc:litert_compiled_model_webgpu_test.cc"],
+    data = [
+        "//litert/test:testdata/simple_model.tflite",
+    ],
+    tags = [
+        "no_oss",
+        "notap",
+    ],
+    deps = [
+        ":litert_compiled_model",
+        ":litert_environment",
+        ":litert_event",
+        ":litert_gpu_options",
+        ":litert_options",
+        ":litert_runtime_options",
+        ":litert_tensor_buffer",
+        "//litert/c:litert_common",
+        "//litert/c:litert_environment_options",
+        "//litert/c:litert_event",
+        "//litert/c:litert_event_type",
+        "//litert/c:litert_profiler_event",
+        "//litert/c:litert_tensor_buffer_types",
+        "//litert/cc:litert_expected",
+        "//litert/cc:litert_macros",
+        "//litert/cc:litert_model",
+        "//litert/cc:litert_platform_support",
+        "//litert/runtime/accelerators/gpu:ml_drift_webgpu_accelerator",  # buildcleaner: keep
+        "//litert/test:common",
+        "//litert/test:matchers",
+        "//litert/test:simple_model",
+        "@com_google_absl//absl/debugging:leak_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest_main",
+        "@opencl_headers",
+    ],
+)
+
+litert_device_exec(
+    name = "litert_compiled_model_webgpu_test_device",
+    backend_id = "gpu",
+    data = [
+        "//litert/test:testdata/simple_model.tflite",
+    ],
+    target = ":litert_compiled_model_webgpu_test",
 )

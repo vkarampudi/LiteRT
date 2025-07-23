@@ -27,17 +27,12 @@
 #include "litert/runtime/ahwb_buffer.h"
 #include "litert/runtime/gl_buffer.h"
 #include "litert/runtime/gpu_environment.h"
+#include "litert/runtime/tensor_buffer_lockstate.h"
 #include <CL/cl.h>
 #include "tflite/delegates/gpu/cl/buffer.h"
 
 namespace litert::internal {
 
-enum class LockState {
-  kUnlocked = 0,
-  kRead = 1,
-  kWrite = 2,
-  kReadWrite = 3,
-};
 /**
  * The OpenCL memory class that provides GPU memory allocation and two-way sync
  * between the CPU memory and the GPU OpenCL buffer.

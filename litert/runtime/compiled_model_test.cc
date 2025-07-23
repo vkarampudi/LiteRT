@@ -37,6 +37,7 @@
 #include "litert/cc/litert_expected.h"
 #include "litert/cc/litert_handle.h"
 #include "litert/cc/litert_macros.h"
+#include "litert/cc/options/litert_runtime_options.h"
 #include "litert/cc/litert_tensor_buffer.h"
 #include "litert/core/model/model.h"
 #include "litert/runtime/open_cl_memory.h"
@@ -146,10 +147,10 @@ CreateInputOutputBuffersFromRequirements(LiteRtEnvironment env,
   tensor_buffers.reserve(tensors.size());
 
   for (int i = 0; i < tensors.size(); ++i) {
-    Expected<LiteRtTensorBufferRequirementsT*> requirements_expected =
+    Expected<const LiteRtTensorBufferRequirementsT*> requirements_expected =
         is_input ? compiled_model.GetInputBufferRequirements(signature_key, i)
                  : compiled_model.GetOutputBufferRequirements(signature_key, i);
-    LITERT_ASSIGN_OR_RETURN(LiteRtTensorBufferRequirementsT * requirements,
+    LITERT_ASSIGN_OR_RETURN(const LiteRtTensorBufferRequirementsT* requirements,
                             requirements_expected);
 
     LITERT_ASSIGN_OR_RETURN(
@@ -214,7 +215,7 @@ TEST(CompiledModelTest, Basic) {
   // Check CompiledModel buffer requirements.
   // input and output expect host memory.
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg0,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg0,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/0));
@@ -224,7 +225,7 @@ TEST(CompiledModelTest, Basic) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg1,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg1,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/1));
@@ -234,7 +235,7 @@ TEST(CompiledModelTest, Basic) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * output_buffer_requirements,
+      const LiteRtTensorBufferRequirementsT* output_buffer_requirements,
       compiled_model->GetOutputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*output_index=*/0));
@@ -363,7 +364,7 @@ TEST(CompiledModelTest, UseAhwbBuffer) {
 
   // Check input and output buffer requirements expect host memory.
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg0,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg0,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/0));
@@ -373,7 +374,7 @@ TEST(CompiledModelTest, UseAhwbBuffer) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg1,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg1,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/1));
@@ -383,7 +384,7 @@ TEST(CompiledModelTest, UseAhwbBuffer) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * output_buffer_requirements,
+      const LiteRtTensorBufferRequirementsT* output_buffer_requirements,
       compiled_model->GetOutputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*output_index=*/0));
@@ -497,7 +498,7 @@ TEST(CompiledModelTest, UseOpenCLBuffer) {
   // Check ComiledModel buffer requirements.
   // input and output expect host memory.
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg0,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg0,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/0));
@@ -507,7 +508,7 @@ TEST(CompiledModelTest, UseOpenCLBuffer) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg1,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg1,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/1));
@@ -517,7 +518,7 @@ TEST(CompiledModelTest, UseOpenCLBuffer) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * output_buffer_requirements,
+      const LiteRtTensorBufferRequirementsT* output_buffer_requirements,
       compiled_model->GetOutputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*output_index=*/0));
@@ -615,21 +616,24 @@ TEST(CompiledModelTest, WithProfiler) {
   ASSERT_EQ(LiteRtSetOptionsHardwareAccelerators(jit_compilation_options,
                                                  kLiteRtHwAcceleratorCpu),
             kLiteRtStatusOk);
+  LITERT_ASSIGN_OR_ABORT(auto runtime_options, RuntimeOptions::Create());
+  runtime_options.SetEnableProfiling(/*enabled=*/true);
+  jit_compilation_options->options.Append(std::move(runtime_options));
+
   LITERT_ASSERT_OK_AND_ASSIGN(
       LiteRtCompiledModelT::Ptr compiled_model,
       LiteRtCompiledModelT::Create(env_ptr, model, jit_compilation_options));
   LiteRtDestroyOptions(jit_compilation_options);
 
   // Create profiler.
-  LiteRtProfiler profiler = nullptr;
-  ASSERT_EQ(LiteRtCreateProfiler(100, &profiler), kLiteRtStatusOk);
-  compiled_model->SetProfiler(profiler);
+  LITERT_ASSERT_OK_AND_ASSIGN(LiteRtProfiler profiler,
+                              compiled_model->GetProfiler());
   ASSERT_EQ(LiteRtStartProfiler(profiler), kLiteRtStatusOk);
 
   // Check CompiledModel buffer requirements.
   // input and output expect host memory.
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg0,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg0,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/0));
@@ -639,7 +643,7 @@ TEST(CompiledModelTest, WithProfiler) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * input_buffer_requirements_arg1,
+      const LiteRtTensorBufferRequirementsT* input_buffer_requirements_arg1,
       compiled_model->GetInputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*input_index=*/1));
@@ -649,7 +653,7 @@ TEST(CompiledModelTest, WithProfiler) {
               ElementsAre(kLiteRtTensorBufferTypeHostMemory));
 
   LITERT_ASSERT_OK_AND_ASSIGN(
-      LiteRtTensorBufferRequirementsT * output_buffer_requirements,
+      const LiteRtTensorBufferRequirementsT* output_buffer_requirements,
       compiled_model->GetOutputBufferRequirements(
           /*signature_key=*/LiteRtSignatureT::kDefaultSignatureKey,
           /*output_index=*/0));
@@ -712,7 +716,6 @@ TEST(CompiledModelTest, WithProfiler) {
     LiteRtDestroyTensorBuffer(output_buffer);
   }
 
-  LiteRtDestroyProfiler(profiler);
   LiteRtDestroyModel(model);
   LiteRtDestroyEnvironment(env_ptr);
 }

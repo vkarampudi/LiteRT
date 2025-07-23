@@ -79,6 +79,9 @@ LITERT_DEFINE_HANDLE(LiteRtTensorBuffer);
 LITERT_DEFINE_HANDLE(LiteRtTensorBufferRequirements);
 // LiteRT Profiler object. (litert_profiler.h)
 LITERT_DEFINE_HANDLE(LiteRtProfiler);
+// LiteRT ExternalLiteRtBufferContext object.
+// (litert_external_litert_buffer_context.h)
+LITERT_DEFINE_HANDLE(LiteRtExternalLiteRtBufferContext);
 
 #if __ANDROID_API__ >= 26
 #define LITERT_HAS_AHWB_SUPPORT 1
@@ -98,18 +101,21 @@ LITERT_DEFINE_HANDLE(LiteRtProfiler);
 #define LITERT_HAS_FASTRPC_SUPPORT 1
 #define LITERT_HAS_OPENGL_SUPPORT 1
 #define LITERT_HAS_OPENCL_SUPPORT_DEFAULT 1
+#define LITERT_HAS_WEBGPU_SUPPORT_DEFAULT 1
 // copybara:comment_begin(google-only)
 #elif defined(GOOGLE_UNSUPPORTED_OS_LOONIX)
 #define LITERT_HAS_ION_SUPPORT 0
 #define LITERT_HAS_DMABUF_SUPPORT 1
 #define LITERT_HAS_FASTRPC_SUPPORT 0
 #define LITERT_HAS_OPENCL_SUPPORT_DEFAULT 1
+#define LITERT_HAS_WEBGPU_SUPPORT_DEFAULT 1
 // copybara:comment_end
 #else
 #define LITERT_HAS_ION_SUPPORT 0
 #define LITERT_HAS_DMABUF_SUPPORT 0
 #define LITERT_HAS_FASTRPC_SUPPORT 0
 #define LITERT_HAS_OPENCL_SUPPORT_DEFAULT 1
+#define LITERT_HAS_WEBGPU_SUPPORT_DEFAULT 1
 #define LITERT_HAS_OPENGL_SUPPORT 0
 #endif
 
@@ -117,6 +123,11 @@ LITERT_DEFINE_HANDLE(LiteRtProfiler);
 #define LITERT_HAS_OPENCL_SUPPORT 0
 #else
 #define LITERT_HAS_OPENCL_SUPPORT LITERT_HAS_OPENCL_SUPPORT_DEFAULT
+#endif
+#if defined(LITERT_DISABLE_WEBGPU_SUPPORT)
+#define LITERT_HAS_WEBGPU_SUPPORT 0
+#else
+#define LITERT_HAS_WEBGPU_SUPPORT LITERT_HAS_WEBGPU_SUPPORT_DEFAULT
 #endif
 
 #define LITERT_API_VERSION_MAJOR 0
@@ -150,6 +161,7 @@ typedef enum {
   kLiteRtStatusErrorTimeoutExpired = 7,
   kLiteRtStatusErrorWrongVersion = 8,
   kLiteRtStatusErrorUnknown = 9,
+  kLiteRtStatusErrorAlreadyExists = 10,
 
   // File and loading related errors.
   kLiteRtStatusErrorFileIO = 500,
@@ -197,6 +209,13 @@ typedef enum {
   kLiteRtDelegateBufferStorageTypeBuffer = 1,
   kLiteRtDelegateBufferStorageTypeTexture2D = 2,
 } LiteRtDelegateBufferStorageType;
+
+// Lock mode for tensor buffer.
+typedef enum {
+  kLiteRtTensorBufferLockModeRead = 0,
+  kLiteRtTensorBufferLockModeWrite = 1,
+  kLiteRtTensorBufferLockModeReadWrite = 2,
+} LiteRtTensorBufferLockMode;
 
 // A bit field of `LiteRtHwAccelerators` values.
 typedef int LiteRtHwAcceleratorSet;

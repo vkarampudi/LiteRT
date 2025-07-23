@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # copybara:uncomment load("//devtools/deps/check:deps_check.bzl", "check_dependencies")
-load("//litert/build_common:litert_build_defs.bzl", "export_lrt_runtime_only_linkopt", "export_lrt_runtime_only_script")
+load("//litert/build_common:litert_build_defs.bzl", "export_lrt_runtime_only_linkopt", "export_lrt_runtime_only_script", "export_lrt_tflite_runtime_linkopt", "export_lrt_tflite_runtime_script")
 load("//litert/build_common:special_rule.bzl", "gles_deps", "gles_headers", "gles_linkopts")
 
 package(
@@ -364,6 +364,18 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "litert_tensor_buffer_registry",
+    srcs = ["litert_tensor_buffer_registry.cc"],
+    hdrs = ["litert_tensor_buffer_registry.h"],
+    deps = [
+        ":litert_common",
+        ":litert_tensor_buffer_types",
+        "//litert/cc:litert_macros",
+        "//litert/runtime:tensor_buffer_registry",
+    ],
+)
+
 cc_test(
     name = "litert_tensor_buffer_requirements_test",
     srcs = [
@@ -559,6 +571,16 @@ cc_library(
 )
 
 cc_library(
+    name = "litert_custom_tensor_buffer",
+    hdrs = ["litert_custom_tensor_buffer.h"],
+    deps = [
+        ":litert_common",
+        ":litert_model",
+        ":litert_tensor_buffer_types",
+    ],
+)
+
+cc_library(
     name = "litert_platform_support",
     hdrs = ["litert_platform_support.h"],
     deps = [":litert_common"],
@@ -614,6 +636,21 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "litert_external_litert_buffer_context",
+    srcs = ["litert_external_litert_buffer_context.cc"],
+    hdrs = [
+        "litert_external_litert_buffer_context.h",
+    ],
+    deps = [
+        ":litert_common",
+        ":litert_dispatch_headers",
+        "//litert/cc:litert_macros",
+        "//litert/runtime:external_litert_buffer_context",
+        "//tflite/c:common",
+    ],
+)
+
 filegroup(
     name = "litert_model_srcs",
     srcs = ["litert_model.cc"],
@@ -633,6 +670,7 @@ LITERT_C_API_COMMON_DEPS = [
     ":litert_any",
     ":litert_common",
     ":litert_compiled_model",
+    ":litert_custom_tensor_buffer",
     ":litert_options",
     ":litert_dispatch_delegate",
     ":litert_event",
@@ -645,6 +683,8 @@ LITERT_C_API_COMMON_DEPS = [
     ":litert_op_options",
     ":litert_profiler",
     ":litert_tensor_buffer",
+    ":litert_external_litert_buffer_context",
+    ":litert_tensor_buffer_registry",
     "//litert/c/options:litert_cpu_options",
     "//litert/c/options:litert_qualcomm_options",
     "//litert/c/options:litert_google_tensor_options",
@@ -680,6 +720,26 @@ cc_shared_library(
     deps = LITERT_C_API_COMMON_DEPS,
 )
 
+# Build `litert/c:litert_runtime_c_api_so` for `libLiteRtRuntimeCApi.so`.
+cc_shared_library(
+    name = "litert_tflite_runtime_c_api_so",
+    additional_linker_inputs = export_lrt_tflite_runtime_script(),
+    shared_lib_name = "libLiteRtRuntimeCApi.so",
+    user_link_flags = export_lrt_tflite_runtime_linkopt() + select({
+        "@org_tensorflow//tensorflow:android": [
+            "-landroid",
+            "-Wl,-soname=libLiteRtRuntimeCApi.so",
+        ],
+        "@org_tensorflow//tensorflow:ios": [],
+        "@org_tensorflow//tensorflow:macos": [],
+        "//conditions:default": ["-Wl,-soname=libLiteRtRuntimeCApi.so"],
+    }),
+    deps = LITERT_C_API_COMMON_DEPS + [
+        "//tflite/c:c_api",
+        "//tflite/c:c_api_experimental",
+    ],
+)
+
 # Allows referring to the above as a target with the name :libLiteRtRuntimeCApi.so.
 filegroup(
     name = "libLiteRtRuntimeCApi.so",
@@ -709,6 +769,7 @@ cc_library(
         ":litert_options.h",
         ":litert_platform_support.h",
         ":litert_tensor_buffer.h",
+        ":litert_external_litert_buffer_context.h",
         ":litert_tensor_buffer_requirements.h",
         ":litert_tensor_buffer_types.h",
         # Needed for litert/c/litert_op_code.h

@@ -49,6 +49,7 @@ cc_library(
     name = "tensor_buffer",
     srcs = [
         "ahwb_buffer.cc",
+        "custom_buffer.cc",
         "dmabuf_buffer.cc",
         "fastrpc_buffer.cc",
         "gl_buffer.cc",
@@ -61,6 +62,7 @@ cc_library(
     ],
     hdrs = [
         "ahwb_buffer.h",
+        "custom_buffer.h",
         "dmabuf_buffer.h",
         "event.h",
         "fastrpc_buffer.h",
@@ -70,12 +72,15 @@ cc_library(
         "open_cl_memory.h",
         "open_cl_sync.h",
         "tensor_buffer.h",
+        "tensor_buffer_lockstate.h",
         "tensor_buffer_requirements.h",
+        "//litert/c:litert_custom_tensor_buffer.h",
         "//litert/c:litert_tensor_buffer.h",
     ],
     linkopts = gles_linkopts(),
     deps = [
         ":gpu_environment",
+        ":tensor_buffer_registry",
         "//litert/c:litert_common",
         "//litert/c:litert_event_type",
         "//litert/c:litert_gl_types",
@@ -124,27 +129,66 @@ cc_library(
 )
 
 cc_library(
+    name = "tensor_buffer_registry",
+    srcs = ["tensor_buffer_registry.cc"],
+    hdrs = [
+        "tensor_buffer_registry.h",
+        "//litert/c:litert_custom_tensor_buffer.h",
+    ],
+    visibility = [
+        "//litert/c:__subpackages__",
+    ],
+    deps = [
+        "//litert/c:litert_common",
+        "//litert/c:litert_model",
+        "//litert/c:litert_tensor_buffer_types",
+        "//litert/cc:litert_expected",
+        "//litert/cc:litert_tensor_buffer_utils",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "tensor_buffer_registry_test",
+    srcs = ["tensor_buffer_registry_test.cc"],
+    deps = [
+        ":tensor_buffer",
+        ":tensor_buffer_registry",
+        "//litert/c:litert_common",
+        "//litert/c:litert_logging",
+        "//litert/c:litert_model",
+        "//litert/c:litert_tensor_buffer_types",
+        "//litert/cc:litert_layout",
+        "//litert/cc:litert_macros",
+        "//litert/cc:litert_model",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+GPU_ENVIRONMENT_DEPS = [
+    "//litert/c:litert_any",
+    "//litert/c:litert_common",
+    "//litert/c:litert_gl_types",
+    "//litert/c:litert_logging",
+    "//litert/cc:litert_expected",
+    "//litert/cc:litert_macros",
+    "@opencl_headers",
+    "//tflite/delegates/gpu/cl:cl_command_queue",
+    "//tflite/delegates/gpu/cl:cl_context",
+    "//tflite/delegates/gpu/cl:cl_device",
+    "//tflite/delegates/gpu/cl:opencl_wrapper",
+] + select({
+    "@org_tensorflow//tensorflow:android": [
+        "//tflite/delegates/gpu/cl:gl_interop",
+        "//tflite/delegates/gpu/gl:egl_environment",
+    ],
+    "//conditions:default": [],
+})
+
+cc_library(
     name = "gpu_environment_header",
     hdrs = ["gpu_environment.h"],
-    deps = [
-        "//litert/c:litert_any",
-        "//litert/c:litert_common",
-        "//litert/c:litert_gl_types",
-        "//litert/c:litert_logging",
-        "//litert/cc:litert_expected",
-        "//litert/cc:litert_macros",
-        "//tflite/delegates/gpu/cl:cl_command_queue",
-        "//tflite/delegates/gpu/cl:cl_context",
-        "//tflite/delegates/gpu/cl:cl_device",
-        "//tflite/delegates/gpu/cl:opencl_wrapper",
-        "@opencl_headers",
-    ] + select({
-        "@org_tensorflow//tensorflow:android": [
-            "//tflite/delegates/gpu/cl:gl_interop",
-            "//tflite/delegates/gpu/gl:egl_environment",
-        ],
-        "//conditions:default": [],
-    }),
+    deps = GPU_ENVIRONMENT_DEPS,
 )
 
 cc_library(
@@ -152,27 +196,10 @@ cc_library(
     srcs = ["gpu_environment.cc"],
     hdrs = ["gpu_environment.h"],
     linkopts = gles_linkopts(),
-    deps = [
-        "//litert/c:litert_any",
-        "//litert/c:litert_common",
+    deps = GPU_ENVIRONMENT_DEPS + [
         "//litert/c:litert_environment_options",
-        "//litert/c:litert_gl_types",
-        "//litert/c:litert_logging",
-        "//litert/cc:litert_expected",
-        "//litert/cc:litert_macros",
         "//litert/core:environment",
-        "//tflite/delegates/gpu/cl:cl_command_queue",
-        "//tflite/delegates/gpu/cl:cl_context",
-        "//tflite/delegates/gpu/cl:cl_device",
-        "//tflite/delegates/gpu/cl:opencl_wrapper",
-        "@opencl_headers",
-    ] + select({
-        "@org_tensorflow//tensorflow:android": [
-            "//tflite/delegates/gpu/cl:gl_interop",
-            "//tflite/delegates/gpu/gl:egl_environment",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 # copybara:uncomment_begin(google-only)
@@ -223,37 +250,14 @@ cc_library(
     srcs = ["external_litert_buffer_context.cc"],
     hdrs = ["external_litert_buffer_context.h"],
     deps = [
+        ":tensor_buffer",
         ":tfl_utils",
         "//litert/c:litert_common",
-        "//litert/c:litert_logging",
         "//litert/c:litert_model",
         "//litert/c:litert_tensor_buffer",
+        "//litert/c:litert_tensor_buffer_types",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_handle",
-        "//litert/cc/internal:litert_tensor_buffer",
-        "//litert/cc/internal:litert_tensor_buffer_requirements",
-        "//tflite/c:c_api",
-        "//tflite/c:c_api_opaque",
-        "//tflite/c:c_api_types",
-        "//tflite/c:common",
-        "@com_google_absl//absl/strings:str_format",
-    ],
-)
-
-# external_litert_buffer_context target depending on litert_runtime_c_api_shared_lib.
-cc_library(
-    name = "external_litert_buffer_context_runtimecapi",
-    srcs = ["external_litert_buffer_context.cc"],
-    hdrs = ["external_litert_buffer_context.h"],
-    deps = [
-        ":tfl_utils",
-        "//litert/c:litert_common",
-        "//litert/c:litert_logging",
-        "//litert/c:litert_runtime_c_api_shared_lib",
-        "//litert/cc:litert_expected",
-        "//litert/cc:litert_handle",
-        "//litert/cc:litert_tensor_buffer",
-        "//litert/cc:litert_tensor_buffer_requirements",
+        "//litert/cc:litert_macros",
         "//tflite/c:c_api",
         "//tflite/c:c_api_opaque",
         "//tflite/c:c_api_types",
@@ -289,8 +293,6 @@ cc_library(
         "//litert/cc:litert_tensor_buffer_utils",
         "//litert/cc/internal:litert_event",
         "//litert/cc/internal:litert_options",
-        "//litert/cc/internal:litert_tensor_buffer",
-        "//litert/cc/internal:litert_tensor_buffer_requirements",
         "//litert/compiler/plugin:compiler_plugin",
         "//litert/core:build_stamp",
         "//litert/core:environment",
@@ -314,7 +316,9 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/compiler/mlir/lite:allocation",
     ],
 )
@@ -344,6 +348,7 @@ cc_test(
         "//litert/cc:litert_handle",
         "//litert/cc:litert_macros",
         "//litert/cc/internal:litert_tensor_buffer",
+        "//litert/cc/options:litert_runtime_options",
         "//litert/core/model",
         "//litert/test:common",
         "//litert/test:matchers",
@@ -471,15 +476,16 @@ cc_library(
     hdrs = ["custom_op_dispatcher.h"],
     deps = [
         ":external_litert_buffer_context",
+        ":tensor_buffer",
         ":tfl_utils",
         "//litert/c:litert_common",
         "//litert/c:litert_custom_op_kernel",
         "//litert/c:litert_layout",
         "//litert/c:litert_logging",
+        "//litert/c:litert_model_types",
         "//litert/c:litert_tensor_buffer",
         "//litert/cc:litert_expected",
         "//litert/cc:litert_macros",
-        "//litert/cc/internal:litert_tensor_buffer",
         "//litert/core:options",
         "//tflite:builtin_ops",
         "//tflite/c:c_api",
@@ -488,7 +494,6 @@ cc_library(
         "//tflite/c:common",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -502,7 +507,6 @@ cc_library(
     srcs = ["profiler.cc"],
     hdrs = ["profiler.h"],
     deps = [
-        "//litert/c:litert_logging",
         "//litert/c:litert_profiler_event",
         "//tflite/core/api",
         "//tflite/profiling:profile_buffer",

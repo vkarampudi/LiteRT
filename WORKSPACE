@@ -154,6 +154,10 @@ load("//third_party/tqdm:workspace.bzl", tqdm = "repo")
 
 tqdm()
 
+load("//third_party/dawn:workspace.bzl", dawn = "repo")
+
+dawn()
+
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
@@ -219,3 +223,10 @@ google_tensor()
 load("//third_party/litert_gpu:workspace.bzl", "litert_gpu")
 
 litert_gpu()
+
+load("//third_party/intel_openvino:openvino.bzl", "openvino_configure")
+
+openvino_configure(
+    name = "intel_openvino",
+    build_file = "//third_party/intel_openvino:openvino.bazel",
+)

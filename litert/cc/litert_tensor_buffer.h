@@ -159,6 +159,18 @@ class TensorBuffer
 #endif
   }
 
+  Expected<WGPUBuffer> GetWebGpuBuffer() const {
+#if LITERT_HAS_WEBGPU_SUPPORT
+    WGPUBuffer webgpu_buffer;
+    LITERT_RETURN_IF_ERROR(
+        LiteRtGetTensorBufferWebGpuBuffer(Get(), &webgpu_buffer));
+    return webgpu_buffer;
+#else
+    return litert::Unexpected(kLiteRtStatusErrorRuntimeFailure,
+                              "WebGPU is not supported on this platform");
+#endif
+  }
+
   struct GlBuffer {
     LiteRtGLenum target;
     LiteRtGLuint id;
@@ -201,6 +213,11 @@ class TensorBuffer
   // Note: This function doesn't return Expected<bool> users can easily make
   // mistakes when using it.
   bool IsOpenClMemory() const;
+
+  // Returns true if the tensor buffer is an WebGPU memory.
+  // Note: This function doesn't return Expected<bool> users can easily make
+  // mistakes when using it.
+  bool IsWebGpuMemory() const;
 
   Expected<RankedTensorType> TensorType() const {
     LiteRtRankedTensorType tensor_type;
@@ -372,22 +389,19 @@ class TensorBufferScopedLock {
 
   template <typename T = void>
   static Expected<std::pair<TensorBufferScopedLock, T*>> Create(
-      TensorBuffer& tensor_buffer,
-      TensorBuffer::LockMode mode = TensorBuffer::LockMode::kReadWrite) {
+      TensorBuffer& tensor_buffer, TensorBuffer::LockMode mode) {
     return Create<T>(tensor_buffer.Get(), mode);
   }
 
   template <typename T = void>
   static Expected<std::pair<TensorBufferScopedLock, const T*>> Create(
-      const TensorBuffer& tensor_buffer,
-      TensorBuffer::LockMode mode = TensorBuffer::LockMode::kReadWrite) {
+      const TensorBuffer& tensor_buffer, TensorBuffer::LockMode mode) {
     return Create<const T>(tensor_buffer.Get(), mode);
   }
 
   template <typename T = void>
   static Expected<std::pair<TensorBufferScopedLock, T*>> Create(
-      LiteRtTensorBuffer tensor_buffer,
-      TensorBuffer::LockMode mode = TensorBuffer::LockMode::kReadWrite) {
+      LiteRtTensorBuffer tensor_buffer, TensorBuffer::LockMode mode) {
     void* host_mem_addr;
     LITERT_RETURN_IF_ERROR(LiteRtLockTensorBuffer(
         tensor_buffer, &host_mem_addr, TensorBuffer::ToLiteRtLockMode(mode)));

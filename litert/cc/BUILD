@@ -250,6 +250,8 @@ cc_test(
         ":litert_macros",
         "//litert/c:litert_common",
         "//litert/test:matchers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -310,6 +312,7 @@ cc_library(
     ],
     deps = [
         "//litert/c:litert_common",
+        "//litert/c:litert_logging",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -435,17 +438,24 @@ cc_library(
         "//litert/c:litert_op_code",
         "//litert/c:litert_op_options",
         "@com_google_absl//absl/strings:string_view",
+        "@flatbuffers//:runtime_cc",
     ],
 )
 
 cc_test(
     name = "litert_op_options_test",
     srcs = ["litert_op_options_test.cc"],
+    data = [
+        "//litert/test:mlir_test_data",
+    ],
     deps = [
+        ":litert_expected",
         ":litert_op_options",
+        "//litert/c:litert_common",
         "//litert/c:litert_op_code",
         "//litert/core/model",
         "//litert/core/util:flatbuffer_tools",
+        "//litert/test:common",
         "//tflite/schema:schema_fbs",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest_main",
@@ -651,6 +661,7 @@ cc_library(
 # - litert::Options
 # - litert::CustomOpKernel
 # - litert::DispatchDelegate
+# - litert::ExternalLiteRtBufferContext
 
 LITERT_C_API_DEPS = [
     "//litert/c:litert_any",
@@ -670,6 +681,7 @@ LITERT_C_API_DEPS = [
     "//litert/c:litert_options",
     "//litert/c:litert_tensor_buffer",
     "//litert/c:litert_tensor_buffer_types",
+    "//litert/c:litert_external_litert_buffer_context",
     "//tflite:framework",
     "//tflite/c:c_api_opaque",
     "//tflite/c:c_api_types",
@@ -1031,12 +1043,15 @@ cc_test(
     deps = [
         ":litert_compiled_model",
         ":litert_environment",
+        ":litert_macros",
         ":litert_model",
+        ":litert_options",
         ":litert_profiler",
         ":litert_tensor_buffer",
         "//litert/c:litert_common",
         "//litert/c:litert_tensor_buffer",
         "//litert/c:litert_tensor_buffer_types",
+        "//litert/cc/options:litert_runtime_options",
         "//litert/test:common",
         "//litert/test:matchers",
         "//litert/test:simple_model",
@@ -1145,6 +1160,7 @@ litert_device_test(
 #         "//litert/c:litert_profiler_event",
 #         "//litert/c:litert_tensor_buffer_types",
 #         "//litert/cc/options:litert_gpu_options",
+#         "//litert/cc/options:litert_runtime_options",
 #         "//litert/runtime/accelerators/gpu:ml_drift_cl_accelerator",  # buildcleaner: keep
 #         "//litert/test:common",
 #         "//litert/test:matchers",
@@ -1214,9 +1230,29 @@ cc_library(
         ":litert_expected",
         ":litert_handle",
         ":litert_macros",
-        "//litert/c:litert_common",
-        "//litert/c:litert_profiler",
-        "//litert/c:litert_profiler_event",
+    ] + select({
+        "@org_tensorflow//tensorflow:ios": LITERT_C_API_DEPS,
+        "@org_tensorflow//tensorflow:emscripten": LITERT_C_API_DEPS,
+        "//conditions:default": [
+            "//litert/c:litert_runtime_c_api_shared_lib",
+        ],
+    }),
+)
+
+cc_library(
+    name = "litert_external_litert_buffer_context",
+    hdrs = ["litert_external_litert_buffer_context.h"],
+    visibility = [
+        "//litert:litert_internal_users_with_internal_cc",
+    ],
+    deps = [
+        ":litert_environment",
+        ":litert_expected",
+        ":litert_handle",
+        ":litert_macros",
+        ":litert_tensor_buffer",
+        "//litert/c:litert_runtime_c_api_shared_lib",
+        "//tflite/c:common",
     ],
 )
 

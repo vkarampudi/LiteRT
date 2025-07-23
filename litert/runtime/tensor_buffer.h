@@ -35,6 +35,7 @@
 #include "litert/c/litert_tensor_buffer.h"
 #include "litert/c/litert_tensor_buffer_types.h"
 #include "litert/cc/litert_expected.h"
+#include "litert/runtime/custom_buffer.h"
 #include "litert/runtime/event.h"
 #include "litert/runtime/gl_buffer.h"
 #include "litert/runtime/gl_texture.h"
@@ -145,6 +146,7 @@ class LiteRtTensorBufferT {
 #if LITERT_HAS_OPENCL_SUPPORT
   litert::Expected<litert::internal::OpenClMemory*> GetOpenClMemory();
 #endif  // LITERT_HAS_OPENCL_SUPPORT
+  litert::Expected<litert::internal::CustomBuffer*> GetCustomBuffer();
 
   litert::Expected<void*> Lock(LiteRtTensorBufferLockMode mode);
   litert::Expected<void> Unlock();
@@ -204,7 +206,8 @@ class LiteRtTensorBufferT {
 #if LITERT_HAS_OPENCL_SUPPORT
                    litert::internal::OpenClMemory,
 #endif  // LITERT_HAS_OPENCL_SUPPORT
-                   litert::internal::GlBuffer, litert::internal::GlTexture>;
+                   litert::internal::CustomBuffer, litert::internal::GlBuffer,
+                   litert::internal::GlTexture>;
 
   LiteRtTensorBufferT(LiteRtEnvironment env,
                       const LiteRtRankedTensorType& tensor_type,
@@ -234,6 +237,10 @@ class LiteRtTensorBufferT {
   static litert::Expected<Ptr> CreateManagedGlBuffer(
       LiteRtEnvironment env, const LiteRtRankedTensorType& tensor_type,
       size_t buffer_size);
+
+  static litert::Expected<Ptr> CreateManagedWebGpuBuffer(
+      LiteRtEnvironment env, const LiteRtRankedTensorType& tensor_type,
+      LiteRtTensorBufferType buffer_type, size_t buffer_size);
 
   litert::Expected<void> IsValid();
 
