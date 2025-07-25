@@ -60,6 +60,12 @@ void Copy(size_t array_size, const T* array, std::vector<T>& vec) {
   vec.assign(array, array + array_size);
 }
 
+// CFI builds don't like directly passing free() as a function pointer, so wrap
+// in another function.
+void FreeHostMemory(void* ptr) {
+  litert_aligned_free(ptr);
+}
+
 }  // namespace
 
 // C API defined in environment.cc to workaround Windows build issue.
@@ -164,6 +170,13 @@ LiteRtTensorBufferT::~LiteRtTensorBufferT() {
       // internal webgpu buffer is auto-disposed by the
       // litert::internal::CustomBuffer destructor.
       break;
+    case kLiteRtTensorBufferTypeMetalBuffer:
+    case kLiteRtTensorBufferTypeMetalBufferFp16:
+    case kLiteRtTensorBufferTypeMetalTexture:
+    case kLiteRtTensorBufferTypeMetalTextureFp16:
+      // internal metal buffer is auto-disposed by the
+      // litert::internal::MetalMemory destructor.
+      break;
   }
 }
 
@@ -196,7 +209,7 @@ LiteRtTensorBufferT::CreateManagedOnHostMemory(
                       "Failed to allocate aligned memory");
   }
 
-  LiteRtHostMemoryDeallocator deallocator = litert_aligned_free;
+  LiteRtHostMemoryDeallocator deallocator = FreeHostMemory;
   LITERT_ASSIGN_OR_RETURN(
       LiteRtTensorBufferT::Ptr tensor_buffer,
       CreateFromHostMemory(
@@ -789,6 +802,15 @@ Expected<void*> LiteRtTensorBufferT::Lock(LiteRtTensorBufferLockMode mode) {
       return host_memory_ptr;
     }
 
+    case kLiteRtTensorBufferTypeMetalBufferFp16:
+    case kLiteRtTensorBufferTypeMetalBuffer:
+    case kLiteRtTensorBufferTypeMetalTextureFp16:
+    case kLiteRtTensorBufferTypeMetalTexture: {
+      // TODO(fengwuyao): Add support for Metal buffers.
+      return Unexpected(kLiteRtStatusErrorRuntimeFailure,
+                        "Metal buffers are not supported");
+    }
+
     case kLiteRtTensorBufferTypeGlTexture:
     case kLiteRtTensorBufferTypeUnknown: {
       return Unexpected(kLiteRtStatusErrorRuntimeFailure,
@@ -836,6 +858,15 @@ Expected<void> LiteRtTensorBufferT::Unlock() {
     case kLiteRtTensorBufferTypeWebGpuBufferPacked: {
       LITERT_ASSIGN_OR_RETURN(auto custom_buffer, GetCustomBuffer());
       return custom_buffer->Unlock();
+    }
+
+    case kLiteRtTensorBufferTypeMetalBuffer:
+    case kLiteRtTensorBufferTypeMetalBufferFp16:
+    case kLiteRtTensorBufferTypeMetalTexture:
+    case kLiteRtTensorBufferTypeMetalTextureFp16: {
+      // TODO(fengwuyao): Add support for Metal buffers.
+      return Unexpected(kLiteRtStatusErrorRuntimeFailure,
+                        "Metal buffers are not supported");
     }
 
     case kLiteRtTensorBufferTypeHostMemory:

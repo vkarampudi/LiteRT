@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <optional>
 #include <type_traits>
+#include <vector>
 
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "flatbuffers/flexbuffers.h"  // from @flatbuffers
@@ -220,6 +221,27 @@ struct StridedSliceOptions : public OpOptions {
   LiteRtStatus InitFromOp(LiteRtOp op) override;
 };
 
+// Struct to hold LiteRt Sub op.
+struct SubOptions : public OpOptions {
+  LiteRtOp op;
+  ActivationFunction fused_activation_function;
+  LiteRtStatus InitFromOp(LiteRtOp op) override;
+};
+
+// Struct to hold LiteRt Reshape op.
+struct ReshapeOptions : public OpOptions {
+  LiteRtOp op;
+  std::vector<int32_t> new_shape;
+  LiteRtStatus InitFromOp(LiteRtOp op) override;
+};
+
+// Struct to hold LiteRt Sum op.
+struct SumOptions : public OpOptions {
+  LiteRtOp op;
+  bool keep_dims;
+  LiteRtStatus InitFromOp(LiteRtOp op) override;
+};
+
 // Returns the composite info for the given op if it is a composite op.
 template <typename OptionsT>
 Expected<OptionsT> GetOptionsAs(LiteRtOp op) {
@@ -261,6 +283,18 @@ Expected<OptionsT> GetOptionsAs(LiteRtOp op) {
     return options;
   } else if constexpr (std::is_same_v<OptionsT, StridedSliceOptions>) {
     StridedSliceOptions options;
+    LITERT_RETURN_IF_ERROR(options.InitFromOp(op));
+    return options;
+  } else if constexpr (std::is_same_v<OptionsT, SubOptions>) {
+    SubOptions options;
+    LITERT_RETURN_IF_ERROR(options.InitFromOp(op));
+    return options;
+  } else if constexpr (std::is_same_v<OptionsT, ReshapeOptions>) {
+    ReshapeOptions options;
+    LITERT_RETURN_IF_ERROR(options.InitFromOp(op));
+    return options;
+  } else if constexpr (std::is_same_v<OptionsT, SumOptions>) {
+    SumOptions options;
     LITERT_RETURN_IF_ERROR(options.InitFromOp(op));
     return options;
   } else {

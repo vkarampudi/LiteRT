@@ -255,6 +255,56 @@ TEST(OpOptionsTest, GetStridedSliceOptions) {
   EXPECT_EQ(&op, res->op);
 }
 
+TEST(OpOptionsTest, GetSubOptions) {
+  LiteRtOpT op;
+  op.SetOpCode(kLiteRtOpCodeTflSub);
+  tflite::SubOptionsT options;
+  options.fused_activation_function = tflite::ActivationFunctionType_TANH;
+  internal::TflOptions tfl_options;
+  tfl_options.type = ::tflite::BuiltinOptions_SubOptions;
+  tfl_options.Set(std::move(options));
+  litert::internal::SetTflOptions(op, std::move(tfl_options));
+
+  auto res = GetOptionsAs<SubOptions>(&op);
+  ASSERT_TRUE(res);
+  EXPECT_EQ(res->fused_activation_function, kActivationFunctionTypeTanh);
+  EXPECT_EQ(&op, res->op);
+}
+
+TEST(OpOptionsTest, GetReshapeOptions) {
+  LiteRtOpT op;
+  op.SetOpCode(kLiteRtOpCodeTflReshape);
+  tflite::ReshapeOptionsT options;
+  options.new_shape = {1, 2, 3};
+  internal::TflOptions tfl_options;
+  tfl_options.type = ::tflite::BuiltinOptions_ReshapeOptions;
+  tfl_options.Set(std::move(options));
+  litert::internal::SetTflOptions(op, std::move(tfl_options));
+
+  auto res = GetOptionsAs<ReshapeOptions>(&op);
+  ASSERT_TRUE(res);
+  EXPECT_EQ(res->new_shape[0], 1);
+  EXPECT_EQ(res->new_shape[1], 2);
+  EXPECT_EQ(res->new_shape[2], 3);
+  EXPECT_EQ(&op, res->op);
+}
+
+TEST(OpOptionsTest, GetSumOptions) {
+  LiteRtOpT op;
+  op.SetOpCode(kLiteRtOpCodeTflSum);
+  tflite::ReducerOptionsT options;
+  options.keep_dims = true;
+  internal::TflOptions tfl_options;
+  tfl_options.type = ::tflite::BuiltinOptions_ReducerOptions;
+  tfl_options.Set(std::move(options));
+  litert::internal::SetTflOptions(op, std::move(tfl_options));
+
+  auto res = GetOptionsAs<SumOptions>(&op);
+  ASSERT_TRUE(res);
+  EXPECT_EQ(res->keep_dims, true);
+  EXPECT_EQ(&op, res->op);
+}
+
 TEST(OpOptionsTest, TestGetOptionsAsInvalidOpOptions) {
   LiteRtOpT op;
   op.SetOpCode(kLiteRtOpCodeShloComposite);
@@ -266,6 +316,9 @@ TEST(OpOptionsTest, TestGetOptionsAsInvalidOpOptions) {
   ASSERT_FALSE(GetOptionsAs<MulOptions>(&op));
   ASSERT_FALSE(GetOptionsAs<SoftmaxOptions>(&op));
   ASSERT_FALSE(GetOptionsAs<StridedSliceOptions>(&op));
+  ASSERT_FALSE(GetOptionsAs<SubOptions>(&op));
+  ASSERT_FALSE(GetOptionsAs<ReshapeOptions>(&op));
+  ASSERT_FALSE(GetOptionsAs<SumOptions>(&op));
 }
 
 }  // namespace
