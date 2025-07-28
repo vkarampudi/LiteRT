@@ -36,6 +36,9 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: Display submodule commit
+        run: echo "TensorFlow submodule commit: $(cd third_party/tensorflow && git rev-parse HEAD)"
+
       - name : Set up cache keys
         id: cache-keys
         run: |
