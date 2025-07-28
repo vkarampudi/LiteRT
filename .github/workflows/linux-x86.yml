@@ -74,10 +74,9 @@ jobs:
           echo "Cache Primary Key: ${{ steps.bazel-cache.outputs.cache-primary-key }}"
           echo "Cache Matched Key: ${{ steps.bazel-cache.outputs.cache-matched-key }}"
       
-      - name: Run build script
+      - name: Run bazel script
         run: |
-          chmod +x ./.github/build-linux-x86.sh
-          bash ./.github/build-linux-x86.sh
+          bash ci/run_bazel_test_with_docker.sh
 
 
       - name: Remove cache if cache is being refreshed.
