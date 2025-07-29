@@ -31,6 +31,8 @@ jobs:
       REFRESH_CACHE: ${{ github.event_name == 'schedule' ||
                          (github.event_name == 'workflow_dispatch' && inputs.REFRESH_CACHE) }}
       TF_LOCAL_SOURCE_PATH: "./third_party/tensorflow"
+      TF_CONFIGURE_IOS: 1
+      DEVELOPER_DIR: "/Applications/Xcode_15.4.app/Contents/Developer"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -77,8 +79,7 @@ jobs:
 
       - name: Configure tensorflow & python path
         run: |
-          export DEVELOPER_DIR=/Applications/Xcode_15.4.app/Contents/Developer
-          export TF_CONFIGURE_IOS=1
+          DEVELOPER_DIR:"/Applications/Xcode_15.4.app/Contents/Developer"
           PYTHON_BIN_PATH=$(pyenv which python3)
           export PYTHON_BIN_PATH
           yes "" | "${PYTHON_BIN_PATH}" configure.py
