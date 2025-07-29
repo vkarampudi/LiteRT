@@ -79,7 +79,7 @@ jobs:
 
       - name: Configure tensorflow & python path
         run: |
-          PYTHON_BIN_PATH=$(pyenv which python3)
+          PYTHON_BIN_PATH=$(which python3)
           export PYTHON_BIN_PATH
           yes "" | "${PYTHON_BIN_PATH}" configure.py
 
