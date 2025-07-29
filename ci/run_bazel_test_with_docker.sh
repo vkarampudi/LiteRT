@@ -46,7 +46,13 @@ else
     # Submodule
     git config --global --add safe.directory /root_dir/third_party/tensorflow
     git submodule update --init --recursive
-    git submodule update --remote
+    if [[ -n "${TENSORFLOW_SUBMODULE_COMMIT}" ]]; then
+      cd /root_dir/third_party/tensorflow
+      git checkout "${TENSORFLOW_SUBMODULE_COMMIT}"
+      cd /root_dir
+    else
+      git submodule update --remote
+    fi
   fi
 
   cd /third_party_tensorflow

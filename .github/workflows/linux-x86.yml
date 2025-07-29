@@ -10,6 +10,10 @@ on:
     - cron: "0 10 * * *"  # Run at 2am PST (10am UTC) every day to refresh the cache.
   workflow_dispatch:  # Manual trigger
     inputs:
+      TENSORFLOW_SUBMODULE_COMMIT:
+        description: 'The commit hash of the TensorFlow submodule to checkout. If empty, it will use the default.'
+        type: string
+        default: ''
       REFRESH_CACHE:
         description: 'Refresh cache to remove unused files'
         type: boolean
@@ -81,6 +85,8 @@ jobs:
           echo "Cache Matched Key: ${{ steps.bazel-cache.outputs.cache-matched-key }}"
       
       - name: Run bazel script
+        env:
+          TENSORFLOW_SUBMODULE_COMMIT: ${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}
         run: |
           bash ci/run_bazel_test_with_docker.sh
 
