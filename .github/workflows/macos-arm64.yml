@@ -79,12 +79,9 @@ jobs:
 
       - name: Configure tensorflow & python path
         run: |
-          DEVELOPER_DIR:"/Applications/Xcode_15.4.app/Contents/Developer"
           PYTHON_BIN_PATH=$(pyenv which python3)
           export PYTHON_BIN_PATH
           yes "" | "${PYTHON_BIN_PATH}" configure.py
-
-
 
       - name: Run bazel build on MacOS
         run: |
