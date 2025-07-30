@@ -40,9 +40,31 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Display submodule commit
+      - name: Configure TensorFlow Submodule Version
+        # This step handles both the specific commit override and the "latest HEAD" update.
         run: |
-          echo "TensorFlow submodule commit: $(cd third_party/tensorflow && git rev-parse HEAD)"
+          SUBMODULE_PATH="third_party/tensorflow"
+          TARGET_COMMIT="${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}"
+
+          if [[ -n "$TARGET_COMMIT" ]]; then
+            echo "--- Manual Commit Specified ---"
+            echo "Attempting to checkout specific commit '$TARGET_COMMIT' for $SUBMODULE_PATH..."
+            cd "$SUBMODULE_PATH" || { echo "Error: Could not navigate to $SUBMODULE_PATH"; exit 1; }
+            git checkout "$TARGET_COMMIT" || { echo "Error: Failed to checkout $TARGET_COMMIT."; exit 1; }
+            cd - > /dev/null # Go back to the original directory (main repo root)
+            echo "Successfully checked out $SUBMODULE_PATH to $TARGET_COMMIT."
+          else
+            echo "--- Updating to Latest HEAD ---"
+            echo "No specific commit provided. Updating $SUBMODULE_PATH to its remote HEAD..."
+            # This fetches the latest from the submodule's default branch (e.g., 'main' or 'master')
+            # and checks it out, but does NOT create a commit in your main repository.
+            git submodule update --remote "$SUBMODULE_PATH" || { echo "Error: Failed to update $SUBMODULE_PATH to remote HEAD."; exit 1; }
+            echo "Successfully updated $SUBMODULE_PATH to its latest HEAD."
+          fi
+          # Display the final commit of the TensorFlow submodule
+          echo "Current TensorFlow submodule commit: $(cd $SUBMODULE_PATH && git rev-parse HEAD)"
+
+      # Note: The original "Display submodule commit" step is now integrated into the step above.
 
       - name : Set up cache keys
         id: cache-keys
@@ -83,13 +105,15 @@ jobs:
           echo "Cache Hit: ${{ steps.bazel-cache.outputs.cache-hit }}"
           echo "Cache Primary Key: ${{ steps.bazel-cache.outputs.cache-primary-key }}"
           echo "Cache Matched Key: ${{ steps.bazel-cache.outputs.cache-matched-key }}"
-      
+
       - name: Run bazel script
         env:
+          # This env var is typically used if your script needs to know the commit
+          # It's set from the workflow_dispatch input, but the *actual* checkout
+          # is handled by the "Configure TensorFlow Submodule Version" step.
           TENSORFLOW_SUBMODULE_COMMIT: ${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}
         run: |
           bash ci/run_bazel_test_with_docker.sh
-
 
       - name: Remove cache if cache is being refreshed.
         if: env.REFRESH_CACHE == 'true'
