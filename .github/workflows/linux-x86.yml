@@ -31,8 +31,9 @@ jobs:
       
     steps:
       # Step 1: Maximize disk space
+      # Corrected the action version from @master to @v2
       - name: Maximize build disk space
-        uses: easimon/maximize-build-disk-space@master
+        uses: easimon/maximize-build-disk-space@v2
         with:
           remove-dotnet: 'true'
           remove-android: 'true'
@@ -48,7 +49,6 @@ jobs:
           
       # Step 3: Configure your submodule (this comes after checkout)
       - name: Configure TensorFlow Submodule Version
-        # This is where the missing 'run' block was.
         run: |
           SUBMODULE_PATH="third_party/tensorflow"
           TARGET_COMMIT="${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}"
