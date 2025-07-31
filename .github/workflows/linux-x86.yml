@@ -25,30 +25,19 @@ jobs:
     name: "Presubmit"
     runs-on: ubuntu-22.04
     permissions:
-      contents: read
+      contents: write
     env:
+      # You can still pass this if your bazel script needs it, but the cache logic is gone.
       TENSORFLOW_SUBMODULE_COMMIT: ${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}
       
     steps:
-      # Step 1: Maximize disk space
-      # Corrected the action version from @master to @v2
-      - name: Maximize build disk space
-        uses: easimon/maximize-build-disk-space@v2
-        with:
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          swap-size-mb: 1024
-          
-      # Step 2: Checkout your code
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
-          
-      # Step 3: Configure your submodule (this comes after checkout)
+
       - name: Configure TensorFlow Submodule Version
+        # This step handles both the specific commit override and the "latest HEAD" update.
         run: |
           SUBMODULE_PATH="third_party/tensorflow"
           TARGET_COMMIT="${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}"
@@ -58,7 +47,7 @@ jobs:
             echo "Attempting to checkout specific commit '$TARGET_COMMIT' for $SUBMODULE_PATH..."
             cd "$SUBMODULE_PATH" || { echo "Error: Could not navigate to $SUBMODULE_PATH"; exit 1; }
             git checkout "$TARGET_COMMIT" || { echo "Error: Failed to checkout $TARGET_COMMIT."; exit 1; }
-            cd - > /dev/null
+            cd - > /dev/null # Go back to the original directory (main repo root)
             echo "Successfully checked out $SUBMODULE_PATH to $TARGET_COMMIT."
           else
             echo "--- Updating to Latest HEAD ---"
@@ -68,12 +57,18 @@ jobs:
           fi
           echo "Current TensorFlow submodule commit: $(cd $SUBMODULE_PATH && git rev-parse HEAD)"
 
-      # Step 4: Run your tests
       - name: Run bazel tests in Docker
+        # This step encapsulates all the heavy work. It is where you should put
+        # your bazel commands and any other dependencies.
+        # This assumes your 'ci/run_bazel_test_with_docker.sh' script is robust.
+        # We also add a simple 'df -h' to see how much space is being used.
         run: |
           echo "--- Checking disk space before tests ---"
           df -h
           
+          # This script will handle its own Docker setup and teardown.
+          # The key is that all the heavy lifting and temporary files will
+          # be confined to the execution of this script.
           bash ci/run_bazel_test_with_docker.sh
           
           echo "--- Checking disk space after tests ---"
