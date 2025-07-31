@@ -30,16 +30,12 @@ jobs:
       TENSORFLOW_SUBMODULE_COMMIT: ${{ inputs.TENSORFLOW_SUBMODULE_COMMIT }}
       
     steps:
-      # Step 1: Maximize disk space
-      # Corrected the action version from @master to @v2
-      - name: Maximize build disk space
-        uses: easimon/maximize-build-disk-space@v2
-        with:
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          swap-size-mb: 1024
+      # Step 1: Maximize disk space with a different, more reliable action
+      - name: Free up disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+          # This action removes common, large pre-installed software
+          # that is often not needed by builds.
+          # You can customize these options as needed.
           
       # Step 2: Checkout your code
       - name: Checkout code
