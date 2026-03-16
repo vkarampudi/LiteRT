@@ -17,9 +17,11 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -34,10 +36,10 @@
 #include "litert/c/litert_common.h"
 #include "litert/c/litert_model.h"
 #include "litert/c/litert_op_code.h"
+#include "litert/c/litert_op_options.h"
 #include "litert/c/litert_opaque_options.h"
 #include "litert/c/options/litert_google_tensor_options.h"
 #include "litert/c/options/litert_google_tensor_options_type.h"
-#include "litert/c/litert_op_options.h"
 #include "litert/cc/internal/litert_extended_model.h"
 #include "litert/cc/litert_buffer_ref.h"
 #include "litert/cc/litert_macros.h"
@@ -45,6 +47,8 @@
 #include "litert/vendors/cc/options_helper.h"
 #include "litert/vendors/google_tensor/adapter.h"
 #include "litert/vendors/google_tensor/compiler/google_tensor_options.pb.h"
+#include "google/protobuf/text_format.h"  // from @com_google_protobuf
+#include "third_party/re2/re2.h"
 
 //
 // Configurations
@@ -60,6 +64,10 @@ using ::third_party::odml::litert::litert::vendors::google_tensor::compiler::
     GoogleTensorOptionsShardingIntensity;
 using ::third_party::odml::litert::litert::vendors::google_tensor::compiler::
     GoogleTensorOptionsTruncationType;
+using ::third_party::odml::litert::litert::vendors::google_tensor::compiler::
+    OpFilter;
+using ::third_party::odml::litert::litert::vendors::google_tensor::compiler::
+    OpFilters;
 
 namespace google_tensor {
 
@@ -244,6 +252,12 @@ LiteRtStatus LrtOptionsToGoogleTensorOptions(
       google_tensor_options.set_testing_flags(flag[0]);
     }
   }
+
+  // OP FILTERS PROTO TEXT FILE
+  const char* op_filters_path;
+  LITERT_RETURN_IF_ERROR(LrtGoogleTensorOptionsGetOpFiltersProtoTextFile(
+      lrt_options, &op_filters_path));
+  google_tensor_options.set_op_filters_proto_text_file(op_filters_path);
 
   return kLiteRtStatusOk;
 }
@@ -437,6 +451,32 @@ class LiteRtCompilerPluginT {
   void SetLiteRtVersion(LiteRtApiVersion v) { litert_version_ = v; }
   LiteRtApiVersion GetLiteRtVersion() const { return litert_version_; }
 
+  LiteRtStatus ReadOpFilters(const std::string& path,
+                             OpFilters& op_filters) const {
+    if (path.empty()) {
+      return kLiteRtStatusOk;
+    }
+
+    std::ifstream ifs(path);
+    if (!ifs.is_open()) {
+      LITERT_LOG(LITERT_ERROR, "Failed to open OpFilters file: %s",
+                 path.c_str());
+      return kLiteRtStatusErrorNotFound;
+    }
+
+    std::stringstream ss;
+    ss << ifs.rdbuf();
+    std::string proto_text = ss.str();
+
+    if (!proto2::TextFormat::ParseFromString(proto_text, &op_filters)) {
+      LITERT_LOG(LITERT_ERROR, "Failed to parse OpFilters proto text from: %s",
+                 path.c_str());
+      return kLiteRtStatusErrorInvalidArgument;
+    }
+
+    return kLiteRtStatusOk;
+  }
+
  private:
   litert::Expected<litert::Options> opts_ =
       litert::Error(kLiteRtStatusErrorInvalidArgument, "Null options");
@@ -462,6 +502,54 @@ void LiteRtDestroyCompilerPlugin(LiteRtCompilerPlugin compiler_plugin) {
 }
 
 namespace google_tensor {
+
+bool IsOpSupportedByFilters(const litert::Op& op, const OpFilters& op_filters) {
+  const auto& filters = op_filters.filters();
+  if (op.Outputs().empty() || filters.empty()) {
+    return true;
+  }
+  if (op_filters.filter_behavior() == OpFilters::MATCHES_RUN_ON_CPU) {
+    // If any of the output tensors match the filter pattern, return false.
+    for (const auto& filter : filters) {
+      if (filter.op_name_pattern().empty()) {
+        LITERT_LOG(LITERT_WARNING, "Empty op_name_pattern in OpFilter.");
+      }
+      for (const auto& output : op.Outputs()) {
+        const auto& tensor_name = output.Name();
+        if (RE2::FullMatch(tensor_name, filter.op_name_pattern())) {
+          LITERT_LOG(LITERT_INFO,
+                     "Op with output tensor '%.*s' is marked as NOT "
+                     "SUPPORTED due to MATCHES_RUN_ON_CPU filter pattern '%s'",
+                     static_cast<int>(tensor_name.length()), tensor_name.data(),
+                     filter.op_name_pattern().c_str());
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  // Case where op_filters.filter_behavior() == OpFilters::MATCHES_RUN_ON_TPU
+  // If any of the output tensors match the filter pattern, return true to run
+  // on TPU.
+  for (const auto& filter : filters) {
+    if (filter.op_name_pattern().empty()) {
+      LITERT_LOG(LITERT_WARNING, "Empty op_name_pattern in OpFilter.");
+    }
+    for (const auto& output : op.Outputs()) {
+      const auto& tensor_name = output.Name();
+      if (RE2::FullMatch(tensor_name, filter.op_name_pattern())) {
+        LITERT_LOG(LITERT_INFO,
+                   "Op with output tensor '%.*s' is marked as SUPPORTED "
+                   "due to MATCHES_RUN_ON_TPU filter pattern '%s'",
+                   static_cast<int>(tensor_name.length()), tensor_name.data(),
+                   filter.op_name_pattern().c_str());
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool IsShloCompositeOpSupported(const litert::Op& op) {
   if (op.Code() == kLiteRtOpCodeShloComposite) {
     const char* custom_op_name = nullptr;
@@ -482,7 +570,7 @@ bool IsShloCompositeOpSupported(const litert::Op& op) {
   return false;
 }
 
-bool IsOpSupported(const litert::Op& op) {
+bool IsOpSupported(const litert::Op& op, const OpFilters& op_filters) {
   // Check if the composite op is supported.
   if (op.Code() == kLiteRtOpCodeShloComposite) {
     return IsShloCompositeOpSupported(op);
@@ -493,7 +581,9 @@ bool IsOpSupported(const litert::Op& op) {
       return false;
     }
   }
-  return true;
+
+  // Check against user-defined OpFilters
+  return IsOpSupportedByFilters(op, op_filters);
 }
 
 }  // namespace google_tensor
@@ -502,9 +592,40 @@ LiteRtStatus LiteRtCompilerPluginPartition(LiteRtCompilerPlugin compiler_plugin,
                                            const char* soc_model,
                                            LiteRtSubgraph subgraph,
                                            LiteRtOpList selected_ops) {
+  if (compiler_plugin == nullptr) {
+    LITERT_LOG(LITERT_ERROR, "%s", "compiler_plugin is nullptr");
+    return kLiteRtStatusErrorInvalidArgument;
+  }
+
+  third_party::odml::litert::litert::vendors::google_tensor::compiler::
+      GoogleTensorOptions google_tensor_options;
+
+  auto lrt_google_tensor_options_expected =
+      compiler_plugin->CreateGoogleTensorOptions();
+  if (!lrt_google_tensor_options_expected) {
+    LITERT_LOG(LITERT_ERROR, "Failed to create LrtGoogleTensorOptions: %s",
+               lrt_google_tensor_options_expected.Error().Message().c_str());
+    return lrt_google_tensor_options_expected.Error().Status();
+  }
+  auto lrt_google_tensor_options = *lrt_google_tensor_options_expected;
+
+  LiteRtStatus status = LrtOptionsToGoogleTensorOptions(
+      lrt_google_tensor_options, google_tensor_options);
+  LrtDestroyGoogleTensorOptions(lrt_google_tensor_options);
+
+  if (status != kLiteRtStatusOk) {
+    LITERT_LOG(LITERT_ERROR, "%s",
+               "Failed to convert LrtOptions to GoogleTensorOptions");
+    return status;
+  }
+
+  OpFilters op_filters;
+  LITERT_RETURN_IF_ERROR(compiler_plugin->ReadOpFilters(
+      google_tensor_options.op_filters_proto_text_file(), op_filters));
+
   ::litert::Subgraph graph(subgraph);
   for (const auto& op : graph.Ops()) {
-    if (!google_tensor::IsOpSupported(op)) {
+    if (!google_tensor::IsOpSupported(op, op_filters)) {
       continue;
     }
 
@@ -607,9 +728,10 @@ LiteRtStatus LiteRtCompilerPluginCompile(
   // map to opaque options
   LITERT_ASSIGN_OR_RETURN(auto lrt_google_tensor_options,
                           compiler_plugin->CreateGoogleTensorOptions());
-  LITERT_RETURN_IF_ERROR(LrtOptionsToGoogleTensorOptions(
-      lrt_google_tensor_options, google_tensor_options));
+  LiteRtStatus lrt_status = LrtOptionsToGoogleTensorOptions(
+      lrt_google_tensor_options, google_tensor_options);
   LrtDestroyGoogleTensorOptions(lrt_google_tensor_options);
+  LITERT_RETURN_IF_ERROR(lrt_status);
 
   // Set litert version string (e.g., "0.1.0")
   LiteRtApiVersion litert_version = compiler_plugin->GetLiteRtVersion();

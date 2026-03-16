@@ -79,6 +79,10 @@ class GoogleTensorOptions {
 
   void SetTestingFlags(const std::string& testing_flags);
 
+  void SetOpFiltersProtoTextFile(absl::string_view op_filters_proto_text_file);
+
+  absl::string_view GetOpFiltersProtoTextFile() const;
+
  private:
   explicit GoogleTensorOptions(LrtGoogleTensorOptions options);
 

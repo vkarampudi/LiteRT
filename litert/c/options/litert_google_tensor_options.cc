@@ -38,6 +38,7 @@ struct LrtGoogleTensorOptionsT {
       kLiteRtGoogleTensorShardingIntensityMinimal;
   bool enable_dynamic_range_quantization = false;
   std::vector<std::vector<std::string>> testing_flags = {};
+  std::string op_filters_proto_text_file = "";
 };
 
 LiteRtStatus LrtCreateGoogleTensorOptions(LrtGoogleTensorOptions* options) {
@@ -93,6 +94,10 @@ LiteRtStatus LrtGetOpaqueGoogleTensorOptionsData(
     absl::StrAppendFormat(&toml_str,
                           "enable_dynamic_range_quantization = true\n");
   }
+  if (!options->op_filters_proto_text_file.empty()) {
+    absl::StrAppendFormat(&toml_str, "op_filters_proto_text_file = \"%s\"\n",
+                          options->op_filters_proto_text_file);
+  }
 
   *identifier = LrtGoogleTensorOptionsGetIdentifier();
   litert::internal::MakeCStringPayload(toml_str, payload, payload_deleter);
@@ -144,6 +149,8 @@ LiteRtStatus LrtCreateGoogleTensorOptionsFromToml(
         } else if (key == "enable_dynamic_range_quantization") {
           LITERT_ASSIGN_OR_RETURN(options_ref.enable_dynamic_range_quantization,
                                   litert::internal::ParseTomlBool(value));
+        } else if (key == "op_filters_proto_text_file") {
+          options_ref.op_filters_proto_text_file = std::string(value);
         }
         return kLiteRtStatusOk;
       });
@@ -363,5 +370,25 @@ LiteRtStatus LrtGoogleTensorOptionsGetTestingFlags(
     return kLiteRtStatusErrorInvalidArgument;
   }
   *testing_flags = options->testing_flags;
+  return kLiteRtStatusOk;
+}
+
+// op_filters_proto_text_file --------------------------------------------------
+
+LiteRtStatus LrtGoogleTensorOptionsSetOpFiltersProtoTextFile(
+    LrtGoogleTensorOptions options, const char* op_filters_proto_text_file) {
+  if (options == nullptr) {
+    return kLiteRtStatusErrorInvalidArgument;
+  }
+  options->op_filters_proto_text_file = op_filters_proto_text_file;
+  return kLiteRtStatusOk;
+}
+
+LiteRtStatus LrtGoogleTensorOptionsGetOpFiltersProtoTextFile(
+    LrtGoogleTensorOptions options, const char** op_filters_proto_text_file) {
+  if (options == nullptr || op_filters_proto_text_file == nullptr) {
+    return kLiteRtStatusErrorInvalidArgument;
+  }
+  *op_filters_proto_text_file = options->op_filters_proto_text_file.c_str();
   return kLiteRtStatusOk;
 }

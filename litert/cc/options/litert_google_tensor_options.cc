@@ -169,4 +169,18 @@ std::vector<std::vector<std::string>> GoogleTensorOptions::GetTestingFlags()
   return testing_flags;
 }
 
+void GoogleTensorOptions::SetOpFiltersProtoTextFile(
+    absl::string_view op_filters_proto_text_file) {
+  internal::AssertOk(LrtGoogleTensorOptionsSetOpFiltersProtoTextFile, Get(),
+                     op_filters_proto_text_file.data());
+}
+
+absl::string_view GoogleTensorOptions::GetOpFiltersProtoTextFile() const {
+  LrtGoogleTensorOptions options_data = Get();
+  const char* op_filters_proto_text_file;
+  internal::AssertOk(LrtGoogleTensorOptionsGetOpFiltersProtoTextFile,
+                     options_data, &op_filters_proto_text_file);
+  return absl::string_view(op_filters_proto_text_file);
+}
+
 }  // namespace litert::google_tensor

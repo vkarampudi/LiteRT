@@ -121,6 +121,15 @@ LiteRtStatus LrtGoogleTensorOptionsSetTestingFlags(
 LiteRtStatus LrtGoogleTensorOptionsGetTestingFlags(
     LrtGoogleTensorOptions options,
     std::vector<std::vector<std::string>>* testing_flags);
+
+// op_filters_proto_text_file --------------------------------------------------
+
+LiteRtStatus LrtGoogleTensorOptionsSetOpFiltersProtoTextFile(
+    LrtGoogleTensorOptions options, const char* op_filters_proto_text_file);
+
+LiteRtStatus LrtGoogleTensorOptionsGetOpFiltersProtoTextFile(
+    LrtGoogleTensorOptions options, const char** op_filters_proto_text_file);
+
 }  // extern "C"
 #endif  // __cplusplus
 
