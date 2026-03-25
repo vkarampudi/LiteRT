@@ -681,6 +681,7 @@ cc_library(
     hdrs = ["litert_runtime_builtin.h"],
     # The visibility is for testing only, otherwise it would be private.
     visibility = [
+        "//litert:litert_friends",
         "//litert/cc:__pkg__",
         "//litert/kotlin/src/tests/google:__pkg__",
     ],
