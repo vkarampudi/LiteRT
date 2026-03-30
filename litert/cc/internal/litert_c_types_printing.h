@@ -48,6 +48,9 @@ void AbslStringify(Sink& sink, const LiteRtElementType& type) {
     case kLiteRtElementTypeFloat32:
       dtype_str = "f32";
       break;
+    case kLiteRtElementTypeFloat16:
+      dtype_str = "f16";
+      break;
     case kLiteRtElementTypeFloat64:
       dtype_str = "f64";
       break;

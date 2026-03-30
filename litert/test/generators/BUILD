@@ -139,6 +139,7 @@ cc_library(
         "//litert/cc/internal:litert_rng",
         "//litert/core/model",
         "//litert/test:simple_buffer",
+        "//tflite/types:half",
         "@com_google_absl//absl/strings:string_view",
     ],
 )

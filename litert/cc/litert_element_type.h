@@ -22,6 +22,7 @@
 
 #include "litert/c/litert_model_types.h"
 #include "litert/cc/internal/litert_numerics.h"
+#include "tflite/types/half.h"
 
 /// @file
 /// @brief Defines the C++ `ElementType` enum and related utility functions for
@@ -167,6 +168,11 @@ inline constexpr ElementType GetElementType<double>() {
   return ElementType::Float64;
 }
 
+template <>
+inline constexpr ElementType GetElementType<tflite::half>() {
+  return ElementType::Float16;
+}
+
 // clang format off
 template <ElementType Ty>
 using GetCCType =
@@ -179,6 +185,7 @@ using GetCCType =
             std::bool_constant<Ty == ElementType::UInt16>, uint16_t,
             std::bool_constant<Ty == ElementType::UInt32>, uint32_t,
             std::bool_constant<Ty == ElementType::UInt64>, uint64_t,
+            std::bool_constant<Ty == ElementType::Float16>, tflite::half,
             std::bool_constant<Ty == ElementType::Float32>, float,
             std::bool_constant<Ty == ElementType::Float64>, double>;
 // clang format on

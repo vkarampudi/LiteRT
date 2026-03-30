@@ -180,6 +180,7 @@ cc_library(
     hdrs = ["litert_numerics.h"],
     deps = [
         ":litert_detail",
+        "//tflite/types:half",
     ],
 )
 

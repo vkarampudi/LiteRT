@@ -197,6 +197,29 @@ class RangedGenerator final : public DataGenerator<D, Dist> {
   }
 };
 
+template <template <typename> typename Dist>
+class RangedGenerator<tflite::half, Dist> final
+    : public DataGeneratorBase<tflite::half> {
+ public:
+  using DataType = tflite::half;
+  using Wide = float;
+
+  RangedGenerator(Wide min = NumericLimits<DataType>::Lowest(),
+                  Wide max = NumericLimits<DataType>::Max())
+      : dist_(static_cast<float>(min), static_cast<float>(max)) {}
+
+  template <typename Rng>
+  DataType operator()(Rng& rng) {
+    return static_cast<DataType>(dist_(rng));
+  }
+
+  DataType Max() const override { return static_cast<DataType>(dist_.max()); }
+  DataType Min() const override { return static_cast<DataType>(dist_.min()); }
+
+ private:
+  Dist<float> dist_;
+};
+
 /// @brief A rangeless float generator that reinterprets random bits as the
 /// given float type.
 ///
@@ -319,18 +342,44 @@ class DummyGenerator final : public DataGeneratorBase<D> {
   D val_ = 0;
 };
 
+template <>
+class DummyGenerator<tflite::half> final
+    : public DataGeneratorBase<tflite::half> {
+ public:
+  using DataType = tflite::half;
+
+  DummyGenerator() = default;
+
+  template <typename Rng>
+  DataType operator()(Rng& rng) {
+    return static_cast<DataType>(val_++);
+  }
+
+  DataType Max() const override {
+    return static_cast<DataType>(NumericLimits<DataType>::Max());
+  }
+  DataType Min() const override { return 0; }
+
+ private:
+  float val_ = 0;
+};
+
 // DEFAULTS FOR DATA GENERATORS ////////////////////////////////////////////////
 
 template <typename D>
 using DefaultGenerator =
-    SelectT<std::is_floating_point<D>,
+    SelectT<std::is_same<D, tflite::half>,
+            RangedGenerator<D, std::uniform_real_distribution>,
+            std::is_floating_point<D>,
             ReinterpretGenerator<D, std::uniform_real_distribution>,
             std::is_integral<D>,
             RangedGenerator<D, std::uniform_int_distribution>>;
 
 template <typename D>
 using DefaultRangedGenerator =
-    SelectT<std::is_floating_point<D>,
+    SelectT<std::is_same<D, tflite::half>,
+            RangedGenerator<D, std::uniform_real_distribution>,
+            std::is_floating_point<D>,
             RangedGenerator<D, std::uniform_real_distribution>,
             std::is_integral<D>,
             RangedGenerator<D, std::uniform_int_distribution>>;
@@ -504,7 +553,8 @@ template <typename D, template <typename> typename Generator>
 class RandomTensorData {
  private:
   /// @todo Support on standard types.
-  static_assert(std::is_integral_v<D> || std::is_floating_point_v<D>);
+  static_assert(std::is_integral_v<D> || std::is_floating_point_v<D> ||
+                std::is_same_v<D, tflite::half>);
   using Gen = Generator<D>;
 
  public:
@@ -586,6 +636,17 @@ class RandomTensorDataBuilder {
     return *this;
   }
 
+  RandomTensorDataBuilder& SetHalfRange(float min, float max) {
+    half_config_ = std::make_pair(static_cast<tflite::half>(min),
+                                  static_cast<tflite::half>(max));
+    return *this;
+  }
+
+  RandomTensorDataBuilder& SetHalfDummy() {
+    half_config_ = Dummy();
+    return *this;
+  }
+
   RandomTensorDataBuilder& SetSin() {
     float_config_ = Sin();
     return *this;
@@ -593,6 +654,10 @@ class RandomTensorDataBuilder {
 
   bool IsFloatDummy() const {
     return std::holds_alternative<Dummy>(float_config_);
+  }
+
+  bool IsHalfDummy() const {
+    return std::holds_alternative<Dummy>(half_config_);
   }
 
   template <typename D>
@@ -631,8 +696,20 @@ class RandomTensorDataBuilder {
         auto [min, max] = std::get<std::pair<D, D>>(int64_config_);
         return {static_cast<double>(min), static_cast<double>(max)};
       }
+    } else if constexpr (std::is_same_v<D, tflite::half>) {
+      if (std::holds_alternative<Dummy>(half_config_)) {
+        return {0.0, static_cast<double>(NumericLimits<tflite::half>::Max())};
+      } else if (std::holds_alternative<NullOpt>(half_config_)) {
+        return {static_cast<double>(NumericLimits<tflite::half>::Lowest()),
+                static_cast<double>(NumericLimits<tflite::half>::Max())};
+      } else {
+        auto [min, max] =
+            std::get<std::pair<tflite::half, tflite::half>>(half_config_);
+        return {static_cast<double>(min), static_cast<double>(max)};
+      }
     } else {
-      static_assert(kUnsupportedRandomTensorDataType<D>, "Unsupported type");
+      static_assert(kUnsupportedRandomTensorDataType<D>,
+                    "Unsupported type in Bounds");
     }
   }
 
@@ -680,8 +757,21 @@ class RandomTensorDataBuilder {
         RandomTensorData<D, DefaultRangedGenerator> data(min, max);
         return Functor()(data, std::forward<Args>(args)...);
       }
+    } else if constexpr (std::is_same_v<D, tflite::half>) {
+      if (std::holds_alternative<Dummy>(half_config_)) {
+        RandomTensorData<D, DummyGenerator> data;
+        return Functor()(data, std::forward<Args>(args)...);
+      } else if (std::holds_alternative<NullOpt>(half_config_)) {
+        RandomTensorData<D, DefaultGenerator> data;
+        return Functor()(data, std::forward<Args>(args)...);
+      } else {
+        auto [min, max] = std::get<std::pair<D, D>>(half_config_);
+        RandomTensorData<D, DefaultRangedGenerator> data(min, max);
+        return Functor()(data, std::forward<Args>(args)...);
+      }
     } else {
-      static_assert(kUnsupportedRandomTensorDataType<D>, "Unsupported type");
+      static_assert(kUnsupportedRandomTensorDataType<D>,
+                    "Unsupported type in Call");
     }
   }
 
@@ -700,6 +790,7 @@ class RandomTensorDataBuilder {
   IntConfig<int32_t> int_config_ = NullOpt();
   FloatConfig<float> float_config_ = NullOpt();
   IntConfig<int64_t> int64_config_ = NullOpt();
+  IntConfig<tflite::half> half_config_ = NullOpt();
 };
 
 /// @brief Scales down random data values to prevent overflow.

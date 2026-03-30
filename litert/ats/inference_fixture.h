@@ -15,6 +15,7 @@
 #ifndef THIRD_PARTY_ODML_LITERT_LITERT_ATS_INFERENCE_FIXTURE_H_
 #define THIRD_PARTY_ODML_LITERT_LITERT_ATS_INFERENCE_FIXTURE_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -26,6 +27,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "absl/strings/match.h"  // from @com_google_absl
 #include "absl/strings/str_format.h"  // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "litert/ats/common.h"
@@ -43,6 +45,7 @@
 #include "litert/test/matchers.h"
 #include "litert/test/rng_fixture.h"
 #include "litert/test/simple_buffer.h"
+#include "tflite/types/half.h"
 
 namespace litert::testing {
 
@@ -81,6 +84,15 @@ class AtsInferenceTest : public RngTest {
   }
 
   void TestBody() override {
+    if (conf_.IsCpu() && absl::StrContains(names_.test, "f16")) {
+      if (absl::StrContains(names_.test, "tfl.log") ||
+          absl::StrContains(names_.test, "tfl.zeros_like") ||
+          absl::StrContains(names_.test, "tfl.sign") ||
+          absl::StrContains(names_.test, "tfl.relu_0_to_1")) {
+        GTEST_SKIP()
+            << "CPU backend (XNNPACK) does not support FP16 for this op.";
+      }
+    }
     auto device = this->TracedDevice(conf_.DataSeed());
     LITERT_ASSERT_OK_AND_ASSIGN(auto exec, MakeExecutor());
     for (auto _ : this->FuzzBlock(conf_.ItersPerTest(), conf_.MaxMsPerTest())) {
@@ -175,6 +187,9 @@ class AtsInferenceTest : public RngTest {
       ASSERT_EQ(actual[i].Type(), ref[i].Type());
       if (actual[i].Type().ElementType() == ElementType::Float32) {
         CheckOutputImpl(actual[i].AsView<float>(), ref[i].AsView<float>());
+      } else if (actual[i].Type().ElementType() == ElementType::Float16) {
+        CheckOutputImpl(actual[i].AsView<tflite::half>(),
+                        ref[i].AsView<tflite::half>());
       } else if (actual[i].Type().ElementType() == ElementType::Int32) {
         CheckOutputImpl(actual[i].AsView<int32_t>(), ref[i].AsView<int32_t>());
       } else {
@@ -188,7 +203,11 @@ class AtsInferenceTest : public RngTest {
   template <typename T>
   void CheckOutputImpl(const BufferView<T>& actual, const BufferView<T>& ref) {
     double mse = std::numeric_limits<double>::max();
-    EXPECT_THAT(actual.data, MeanSquaredErrorLt(ref.data, Tol(), &mse));
+    double tol = Tol();
+    if constexpr (std::is_same_v<T, tflite::half>) {
+      tol = std::max(tol, 1e-2);
+    }
+    EXPECT_THAT(actual.data, MeanSquaredErrorLt(ref.data, tol, &mse));
     cap_.numerics.NewMse(mse);
   }
 

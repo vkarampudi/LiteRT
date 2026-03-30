@@ -21,6 +21,7 @@
 #include <type_traits>
 
 #include "litert/cc/internal/litert_detail.h"
+#include "tflite/types/half.h"
 
 /// @file
 /// @brief Provides numeric utilities, including a wrapper for
@@ -48,11 +49,22 @@ struct NumericLimits {
   static constexpr T Lowest() { return StdLimits::lowest(); }
 };
 
+template <>
+struct NumericLimits<tflite::half> {
+ public:
+  using DataType = tflite::half;
+
+  static constexpr DataType Min() { return DataType::smallest_normal(); }
+  static constexpr DataType Max() { return DataType::max(); }
+  static constexpr DataType Lowest() { return DataType::min(); }
+};
+
 /// @brief A type trait that provides a wider version of a numeric type
 /// (e.g., `i32` -> `i64`, `f32` -> `f64`).
 template <typename T>
 using WideType =
-    SelectT<std::is_floating_point<T>, double, std::is_integral<T>, int64_t>;
+    SelectT<std::is_same<T, tflite::half>, float, std::is_floating_point<T>,
+            double, std::is_integral<T>, int64_t>;
 
 /// @brief Widens a given value to its 64-bit equivalent.
 template <typename T>

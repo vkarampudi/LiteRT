@@ -45,6 +45,7 @@
 #include "litert/cc/litert_layout.h"
 #include "litert/cc/litert_macros.h"
 #include "litert/cc/litert_tensor_buffer.h"
+#include "tflite/types/half.h"
 
 namespace litert {
 namespace testing {
@@ -200,6 +201,9 @@ class SimpleBuffer {
     } else if (Type().ElementType() == ElementType::Int64) {
       return b.Call<int64_t, RandomTensorFunctor>(rng, start, num_elements,
                                                   *this);
+    } else if (Type().ElementType() == ElementType::Float16) {
+      return b.Call<tflite::half, RandomTensorFunctor>(rng, start, num_elements,
+                                                       *this);
     }
     // TODO: Add support for other types.
     return Error(kLiteRtStatusErrorInvalidArgument, "Unsupported element type");
