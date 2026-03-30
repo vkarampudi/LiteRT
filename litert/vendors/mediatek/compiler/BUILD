@@ -53,6 +53,7 @@ litert_dynamic_lib(
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
+        "@neuro_pilot//:v8_latest_host_headers",
     ],
 )
 

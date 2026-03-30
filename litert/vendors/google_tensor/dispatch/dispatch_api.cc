@@ -15,6 +15,8 @@
 #include "litert/vendors/google_tensor/dispatch/dispatch_api.h"
 
 #include "litert/c/internal/litert_scheduling_info.h"
+#include "litert/c/litert_any.h"
+#include "litert/c/litert_environment_options.h"
 
 #if LITERT_HAS_AHWB_SUPPORT
 #include <android/hardware_buffer.h>
@@ -80,6 +82,18 @@ LiteRtStatus Initialize(LiteRtEnvironment env, LiteRtOptions options) {
   GT_LOG_RETURN_IF_SB_ERROR(thrInitialize(), "Failed to initialize SB");
   LiteRtEnvironmentOptions environment_options;
   LiteRtGetEnvironmentOptions(env, &environment_options);
+
+  // Propagate the min logger severity from the environment.
+  LiteRtAny min_logger_severity;
+  auto status = LiteRtGetEnvironmentOptionsValue(
+      environment_options, kLiteRtEnvOptionTagMinLoggerSeverity,
+      &min_logger_severity);
+  if (status == kLiteRtStatusOk) {
+    LiteRtSetMinLoggerSeverity(
+        LiteRtGetDefaultLogger(),
+        static_cast<LiteRtLogSeverity>(min_logger_severity.int_value));
+  }
+
   return InitializeDispatchApiConfig(environment_options, options);
 }
 

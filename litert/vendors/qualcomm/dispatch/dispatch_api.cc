@@ -70,6 +70,17 @@ LiteRtStatus Initialize(LiteRtEnvironment environment, LiteRtOptions options) {
   TheEnvironmentOptions = environment_options;
   TheOptions = options;
 
+  // Propagate the min logger severity from the environment to the delegate.
+  LiteRtAny min_logger_severity;
+  auto status = LiteRtGetEnvironmentOptionsValue(
+      environment_options, kLiteRtEnvOptionTagMinLoggerSeverity,
+      &min_logger_severity);
+  if (status == kLiteRtStatusOk) {
+    LiteRtSetMinLoggerSeverity(
+        LiteRtGetDefaultLogger(),
+        static_cast<LiteRtLogSeverity>(min_logger_severity.int_value));
+  }
+
   const char* dispatch_lib_dir = nullptr;
   if (environment_options) {
     LiteRtAny dispatch_lib_dir_any;

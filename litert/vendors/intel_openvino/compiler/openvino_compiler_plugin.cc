@@ -31,7 +31,9 @@
 #include "openvino/runtime/properties.hpp"
 #include "absl/strings/str_format.h"  // from @com_google_absl
 #include "litert/c/internal/litert_logging.h"
+#include "litert/c/litert_any.h"
 #include "litert/c/litert_common.h"
+#include "litert/c/litert_environment_options.h"
 #include "litert/c/litert_model.h"
 #include "litert/c/litert_op_code.h"
 #include "litert/c/options/litert_intel_openvino_options.h"
@@ -303,7 +305,18 @@ struct LiteRtCompilerPluginT {
 LiteRtStatus LiteRtCreateCompilerPlugin(LiteRtCompilerPlugin* compiler_plugin,
                                         LiteRtEnvironmentOptions env,
                                         LiteRtOptions options) {
-  LiteRtSetMinLoggerSeverity(LiteRtGetDefaultLogger(), LITERT_INFO);
+  // Propagate the min logger severity from the environment.
+  LiteRtAny min_logger_severity;
+  auto status = LiteRtGetEnvironmentOptionsValue(
+      env, kLiteRtEnvOptionTagMinLoggerSeverity, &min_logger_severity);
+  if (status == kLiteRtStatusOk) {
+    LiteRtSetMinLoggerSeverity(
+        LiteRtGetDefaultLogger(),
+        static_cast<LiteRtLogSeverity>(min_logger_severity.int_value));
+  } else {
+    LiteRtSetMinLoggerSeverity(LiteRtGetDefaultLogger(), LITERT_INFO);
+  }
+
   auto* plugin = new LiteRtCompilerPluginT(env, options);
   *compiler_plugin = plugin;
   return kLiteRtStatusOk;

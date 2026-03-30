@@ -77,6 +77,17 @@ LiteRtStatus LiteRtInitialize(LiteRtEnvironment environment,
   static_environment_options = environment_options;
   static_options = options;
 
+  // Propagate the min logger severity from the environment.
+  LiteRtAny min_logger_severity;
+  auto status = LiteRtGetEnvironmentOptionsValue(
+      environment_options, kLiteRtEnvOptionTagMinLoggerSeverity,
+      &min_logger_severity);
+  if (status == kLiteRtStatusOk) {
+    LiteRtSetMinLoggerSeverity(
+        LiteRtGetDefaultLogger(),
+        static_cast<LiteRtLogSeverity>(min_logger_severity.int_value));
+  }
+
   LrtMediatekOptions* mediatek_opts = nullptr;
   const char* mt_payload = "";
   LiteRtOpaqueOptions opaque_opts_c = nullptr;

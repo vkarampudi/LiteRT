@@ -29,8 +29,11 @@
 #include "absl/cleanup/cleanup.h"  // from @com_google_absl
 #include "absl/strings/str_format.h"  // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
+#include "third_party/neuro_pilot/v8_latest/host/include/neuron/api/NeuronAdapter.h"
 #include "litert/c/internal/litert_logging.h"
+#include "litert/c/litert_any.h"
 #include "litert/c/litert_common.h"
+#include "litert/c/litert_environment_options.h"
 #include "litert/c/litert_model.h"
 #include "litert/c/litert_op_code.h"
 #include "litert/c/litert_opaque_options.h"
@@ -335,6 +338,16 @@ class LiteRtCompilerPluginT {
 LiteRtStatus LiteRtCreateCompilerPlugin(LiteRtCompilerPlugin* compiler_plugin,
                                         LiteRtEnvironmentOptions env,
                                         LiteRtOptions options) {
+  // Propagate the min logger severity from the environment.
+  LiteRtAny min_logger_severity;
+  auto status = LiteRtGetEnvironmentOptionsValue(
+      env, kLiteRtEnvOptionTagMinLoggerSeverity, &min_logger_severity);
+  if (status == kLiteRtStatusOk) {
+    LiteRtSetMinLoggerSeverity(
+        LiteRtGetDefaultLogger(),
+        static_cast<LiteRtLogSeverity>(min_logger_severity.int_value));
+  }
+
   *compiler_plugin = new LiteRtCompilerPluginT(env, options);
   return kLiteRtStatusOk;
 }

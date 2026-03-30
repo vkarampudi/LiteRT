@@ -23,8 +23,12 @@
 
 #include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
+#include "litert/c/internal/litert_logging.h"
 #include "litert/c/internal/litert_scheduling_info.h"
+#include "litert/c/litert_any.h"
 #include "litert/c/litert_common.h"
+#include "litert/c/litert_environment.h"
+#include "litert/c/litert_environment_options.h"
 #include "litert/c/litert_model_types.h"
 #include "litert/c/litert_options.h"
 #include "litert/c/litert_tensor_buffer.h"
@@ -305,6 +309,22 @@ LiteRtStatus GetCapabilities(int* capabilities) {
 LiteRtStatus Initialize(LiteRtEnvironment env, LiteRtOptions options) {
   the_environment = env;
   the_options = options;
+
+  // Propagate the min logger severity from the environment.
+  LiteRtEnvironmentOptions environment_options;
+  auto status = LiteRtGetEnvironmentOptions(env, &environment_options);
+  if (status == kLiteRtStatusOk) {
+    LiteRtAny min_logger_severity;
+    status = LiteRtGetEnvironmentOptionsValue(
+        environment_options, kLiteRtEnvOptionTagMinLoggerSeverity,
+        &min_logger_severity);
+    if (status == kLiteRtStatusOk) {
+      LiteRtSetMinLoggerSeverity(
+          LiteRtGetDefaultLogger(),
+          static_cast<LiteRtLogSeverity>(min_logger_severity.int_value));
+    }
+  }
+
   return kLiteRtStatusOk;
 }
 
