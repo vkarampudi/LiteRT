@@ -79,10 +79,10 @@ cc_library(
     hdrs = ["//litert/cc:litert_custom_op_kernel.h"],
     deps = [
         ":litert_environment",
+        ":litert_layout",
         ":litert_tensor_buffer",
         "//litert/cc:litert_common",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_layout",
         "//litert/cc/internal:litert_handle",
         "@com_google_absl//absl/types:span",
     ] + select({
@@ -104,6 +104,7 @@ cc_test(
         ":litert_compiled_model",
         ":litert_custom_op_kernel",
         ":litert_environment",
+        ":litert_layout",
         ":litert_model",
         ":litert_options",
         ":litert_tensor_buffer",
@@ -112,7 +113,6 @@ cc_test(
         "//litert/c:litert_tensor_buffer_types",
         "//litert/cc:litert_common",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_layout",
         "//litert/cc:litert_macros",
         "//litert/test:common",
         "//litert/test:matchers",
@@ -127,6 +127,27 @@ cc_test(
         "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "litert_layout",
+    hdrs = ["//litert/cc:litert_layout.h"],
+    visibility = [
+        "//litert:litert_public",
+    ],
+    deps = [
+        "//litert/cc:litert_expected",
+        "//litert/cc:litert_macros",
+        "//litert/cc/internal:litert_consts",
+        "@com_google_absl//absl/container:inlined_vector",
+        "@com_google_absl//absl/types:span",
+    ] + select({
+        "@org_tensorflow//tensorflow:emscripten": LITERT_C_API_DEPS,
+        "@org_tensorflow//tensorflow:ios": LITERT_C_API_DEPS,
+        "//conditions:default": [
+            "//litert/c:litert_runtime_c_api_shared_lib",
+        ],
+    }),
 )
 
 cc_library(
@@ -260,11 +281,11 @@ cc_library(
     ],
     deps = [
         ":litert_extended_model",
+        ":litert_layout",
         ":litert_op_options",
         "//litert/cc:litert_common",
         "//litert/cc:litert_element_type",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_layout",
         "//litert/cc:litert_ranked_tensor_type",
         "//litert/cc/internal:litert_detail",
         "//litert/cc/internal:litert_handle",
@@ -306,6 +327,7 @@ cc_test(
     ],
     defines = ["LITERT_DYNAMIC_RUNTIME"],
     deps = [
+        ":litert_layout",
         ":litert_model",
         "//litert/c:litert_common",
         "//litert/c:litert_layout",
@@ -313,7 +335,6 @@ cc_test(
         "//litert/c:litert_op_code",
         "//litert/cc:litert_element_type",
         "//litert/cc:litert_environment",
-        "//litert/cc:litert_layout",
         "//litert/cc:litert_ranked_tensor_type",
         "//litert/cc/internal:litert_extended_model",
         "//litert/core/model",
@@ -492,6 +513,7 @@ cc_test(
     deps = [
         ":litert_environment",
         ":litert_event",
+        ":litert_layout",
         ":litert_model",
         ":litert_tensor_buffer",
         "//litert/c:litert_common",
@@ -503,7 +525,6 @@ cc_test(
         "//litert/cc:litert_element_type",
         "//litert/cc:litert_environment_options",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_layout",
         "//litert/cc:litert_macros",
         "//litert/cc:litert_ranked_tensor_type",
         "//litert/cc:litert_tensor_buffer_types",
@@ -593,6 +614,7 @@ cc_library(
     deps = [
         ":litert_custom_op_kernel",
         ":litert_environment",
+        ":litert_layout",
         ":litert_model",
         ":litert_options",
         ":litert_profiler",
@@ -601,7 +623,6 @@ cc_library(
         "//litert/cc:litert_buffer_ref",
         "//litert/cc:litert_common",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_layout",
         "//litert/cc:litert_macros",
         "//litert/cc:litert_model_types",
         "//litert/cc:litert_ranked_tensor_type",
@@ -634,6 +655,7 @@ cc_test(
     deps = [
         ":litert_compiled_model",
         ":litert_environment",
+        ":litert_layout",
         ":litert_model",
         ":litert_options",
         ":litert_profiler",
@@ -644,7 +666,6 @@ cc_test(
         "//litert/cc:litert_common",
         "//litert/cc:litert_element_type",
         "//litert/cc:litert_expected",
-        "//litert/cc:litert_layout",
         "//litert/cc:litert_macros",
         "//litert/cc:litert_ranked_tensor_type",
         "//litert/cc:litert_tensor_buffer_requirements",
@@ -833,8 +854,4 @@ sh_test(
         ":libdynamic_runtime_test.so",
         "//litert/c:litert_runtime_c_api_so",
     ],
-    env = {
-        # TODO: Investigate why these symbols are duplicated.
-        "ALLOWLIST_REGEX": "^LiteRtGetNumLayoutElements$$|^LiteRtIsSameLayout$$",
-    },
 )

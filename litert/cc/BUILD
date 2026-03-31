@@ -1320,7 +1320,7 @@ cc_library(
         ":litert_element_type",
         ":litert_environment_options",
         ":litert_expected",
-        ":litert_layout",
+        "//litert/cc/dynamic_runtime:litert_layout",
         ":litert_macros",
         ":litert_model_types",
         ":litert_tensor_buffer_types",

@@ -194,11 +194,12 @@ cc_test(
     ],
 )
 
-cc_library(
+litert_c_api_library(
     name = "litert_layout",
     srcs = ["litert_layout.cc"],
     hdrs = ["litert_layout.h"],
     compatible_with = get_compatible_with_portable(),
+    header_kwargs = {"compatible_with": get_compatible_with_portable()},
     deps = [":litert_common"],
 )
 
@@ -722,7 +723,7 @@ LITERT_C_API_COMMON_DEPS = [
     ":litert_options_impl",
     ":litert_event_impl",
     ":litert_environment_impl",
-    ":litert_layout",
+    ":litert_layout_impl",
     ":litert_metrics_impl",
     ":litert_model_impl",
     ":litert_model_types",
